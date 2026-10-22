@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Mon Précepteur",
+    "slug": "mon-precepteur",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "monprecepteur",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.monprecepteur.app"
+    },
+    "android": {
+      "package": "com.monprecepteur.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF8F4",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "softwareKeyboardLayoutMode": "resize",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5DEC9",
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain"
+        }
+      ]
+    ]
+  }
+}
