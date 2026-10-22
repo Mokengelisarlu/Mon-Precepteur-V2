@@ -107,7 +107,7 @@ covers Reanimated 4.5.1.
 | Package | When | Why |
 |---|---|---|
 | `expo-image-picker` `~57.0.20` | Step 18 (Mobile Money declaration), only if the evidence attachment is approved | Required for the optional "supporting evidence" attachment. Stored as a local URI only. |
-| `expo-localization` `~57.0.2` | Step 3 (foundations) | Required to detect the device locale for EN/FR selection. |
+| `expo-localization` `~57.0.2` | Step 3 (foundations) | Required to detect the device locale for EN/FR selection. Added in S03. |
 | `expo-font` `~57.0.4` | Step 3 | Only if a custom font is introduced. **Decision: use the system/Roboto stack, do not add a custom font in the prototype.** Listed here as optional; omit if unused. |
 
 No other dependency may be added without a written justification in `context/step-features.md`.
@@ -986,6 +986,8 @@ from `src/features`, `src/store` or `src/components`. The `jest/` folder holds J
 mocks (currently the bottom-sheet mock, which renders its children only when the sheet is open).
 
 ### 12.1 Configuration files (reference content)
+
+`app.json` adds the `expo-localization` plugin with `supportedLocales` for `ios` and `android` (`en`, `fr`). `src/lib/i18n/` provides typed dictionaries, `translate` with interpolation and plurals, locale detection/defaulting to `fr` with an override stored in `useSessionStore`, and `src/hooks/use-translation.ts`. `src/lib/format/` provides locale-aware formatters using `Intl`. `src/store/session-store.ts` holds the session state (locale override).
 
 `babel.config.js`
 ```js

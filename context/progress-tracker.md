@@ -6,13 +6,13 @@
 > `context/ai-workflow-rules.md`, `context/step-features.md`, `context/risk-register.md`.
 
 ## Current phase
-Foundation (Phase 1). Next approved step: **S03 — Localization infrastructure**.
+Foundation (Phase 1). Next approved step: **S04 — Application navigation shell**.
 
 ## Completed steps
 | Step | Date | Notes |
 |---|---|---|
 | S01 | 2026-10-21 | Repo initialised (`git init -b main`), toolchain configured for Expo SDK 57 with S01 deviations recorded in `context/architecture.md` §1.4 / `context/risk-register.md` R-23/R-24, placeholder app + smoke test passing, `expo-doctor` 21/21. First commit pending explicit user instruction. |
-| S02 | 2026-10-22 | Design tokens in `src/lib/theme/tokens.json` (palette incl. approved status colours, spacing, radii, typography, elevation, motion) consumed by `tailwind.config.js`; 27 components + `ErrorBoundary` built and tested. `DateField`, `Attachment` and `ToastHost` deferred (R-25). |
+| S03 | 2026-10-22 | `expo-localization` added with EN/FR plugin config; `src/lib/i18n/` (`en.ts`, `fr.ts` typed as `Record<TranslationKey,string>`, `translate` with `{param}` interpolation and `_one/_other`, `locale` detection/defaulting to FR with override; `src/hooks/use-translation.ts`, `src/store/session-store.ts`); `src/lib/format/` (`formatAmount` USD EN code / FR symbol, `formatDate`/`formatDateTime`, `formatRelativeTime` with `common.now` fallback). `t()` is the only translation entry point. |
 
 ## In progress
 None.
@@ -28,7 +28,7 @@ in `context/architecture.md` §1.2 per the rules).
 |---|---|---|
 | `npm run typecheck` | Pass | `tsc --noEmit` clean (S02 component library included). |
 | `npm run lint` | Pass | `eslint .` clean. |
-| `npm test` | Pass | 54 tests / 6 suites: theme tokens, App smoke test, form controls, display, feedback, `ErrorBoundary`. |
+| `npm test` | Pass | 93 tests / 11 suites: theme tokens, i18n dictionaries/translate/locale, formatters, useTranslation/session store, App smoke test, ErrorBoundary, form controls, display, feedback. |
 | `npx expo-doctor` | Pass | 21/21 checks passed (last run at S01; no dependency changed in S02). |
 | `npx expo export` (android) | Pass | Built successfully in S02 with a temporary route importing the whole `src/components/ui` barrel (removed afterwards) — proves Metro resolves every component, `tokens.json`, Lucide and the bottom sheet. |
 | `npx expo export` (web) | Pass | Built in S02; CSS confirms `bg-surface` `#FFF8F4`, `bg-primary` `#9A4D00`, `bg-success-container` `rgb(205 239 214)`, `rounded-card` `12px`, `shadow-elevation-1/3` present. |

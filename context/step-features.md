@@ -135,7 +135,7 @@ admin screens that consume it.
 - **Completed:** S02 — 54 tests pass, `typecheck`/`lint` clean. `DateField`, `Attachment` and
   `ToastHost` are deferred as recorded in R-25.
 
-### [ ] S03 — Localization infrastructure
+### [x] S03 — Localization infrastructure
 
 - **Objective:** Establish the EN/FR structure so that **no screen is ever built with hardcoded
   strings**.
@@ -162,12 +162,12 @@ admin screens that consume it.
 - **Data & state:** The locale override lives in the session store (created in S05's session slice
   or a minimal store created here if needed).
 - **Acceptance criteria:**
-  - [ ] Adding a key to `en.ts` without adding it to `fr.ts` produces a TypeScript error.
-  - [ ] `t('key', { count: 3 })` interpolates correctly.
-  - [ ] Plural rules differ between FR and EN for the same key.
-  - [ ] `formatAmount(25, 'USD', 'fr')` → `25,00 $US`; in `en` → `USD 25.00`.
-  - [ ] `formatDate` uses the active locale's date format.
-  - [ ] No English or French string exists outside the dictionaries.
+  - [x] Adding a key to `en.ts` without adding it to `fr.ts` produces a TypeScript error.
+  - [x] `t('key', { count: 3 })` interpolates correctly.
+  - [x] Plural rules differ between FR and EN for the same key.
+  - [x] `formatAmount(25, 'USD', 'fr')` → `25,00 $US`; in `en` → `USD 25.00`.
+  - [x] `formatDate` uses the active locale's date format.
+  - [x] No English or French string exists outside the dictionaries.
 - **Tests:** A test asserting the FR dictionary covers every EN key and contains no empty value; a
   test for interpolation and plurals; a test for each formatter.
 - **Definition of done:** The i18n layer is complete, tested and type-safe; `t()` is the only way
