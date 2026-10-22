@@ -174,7 +174,7 @@ admin screens that consume it.
   to obtain a user-facing string.
 - **Depends on:** S01.
 
-### [ ] S04 — Application navigation shell
+### [x] S04 — Application navigation shell
 
 - **Objective:** Establish the Expo Router route tree, the layout hierarchy and the navigation
   conventions from `context/architecture.md` §3.
@@ -184,8 +184,10 @@ admin screens that consume it.
   1. Create `app/_layout.tsx` — the root layout: providers (theme, i18n, error boundary, toast
      host), `GestureHandlerRootView` (**required by `Sheet`/`@gorhom/bottom-sheet`**, see R-25),
      `Stack`, splash-screen handling, `StatusBar`.
-  2. Create `app/(client)/_layout.tsx` and `app/(admin)/_layout.tsx` — the two stacks, with the
-     shared header options from `context/ui-context.md` §4.
+  2. Create `app/(client)/_layout.tsx` and `app/admin/_layout.tsx` — the two stacks, with the
+     shared header options from `context/ui-context.md` §4. **Done:** the administrator's tree is a
+     URL segment, not an `(admin)` group — an `(admin)` group would publish `/payment/…` and
+     `/receipt/…` and would shadow the client routes (R-26, Q13).
   3. Create a placeholder route file for every route listed in `context/architecture.md` §3.1,
      each rendering its screen name — so the whole navigation tree is navigable from day one.
   4. Create `src/lib/navigation/routes.ts` — the typed route builders
@@ -197,27 +199,39 @@ admin screens that consume it.
   7. Build the `ToastHost` provider in `src/components/feedback/` (the stacking/queuing host for
      the `Toast` built in S02).
 - **Expected files:** `app/_layout.tsx`, `app/+not-found.tsx`, `app/(client)/_layout.tsx`,
-  `app/(client)/**/*.tsx` (16 placeholders), `app/(admin)/_layout.tsx`, `app/(admin)/**/*.tsx`
-  (9 placeholders), `src/lib/navigation/routes.ts`.
+  `app/(client)/**/*.tsx` (18 placeholders), `app/admin/_layout.tsx`, `app/admin/**/*.tsx`
+  (9 placeholders), `src/lib/navigation/routes.ts`, `src/lib/navigation/params.ts`,
+  `src/components/feedback/NotFound.tsx`, `src/components/feedback/RoutePlaceholder.tsx`,
+  `src/components/feedback/ToastHost.tsx`, `src/hooks/use-not-found-state.ts`,
+  `src/hooks/use-route-param.ts`.
 - **Data & state:** None.
 - **Acceptance criteria:**
-  - [ ] Every route in `context/architecture.md` §3.1 exists and is reachable.
-  - [ ] The back gesture and the header back button behave identically.
-  - [ ] The admin simulation is reachable from the Welcome screen and is visibly labelled as a
+  - [x] Every route in `context/architecture.md` §3.1 exists and is reachable.
+  - [x] The back gesture and the header back button behave identically.
+  - [x] The admin simulation is reachable from the Welcome screen and is visibly labelled as a
         simulation.
-  - [ ] An unknown route shows the not-found state, not a crash.
-  - [ ] `tsc --noEmit` and lint clean; navigation tests pass.
+  - [x] An unknown route shows the not-found state, not a crash.
+  - [x] `tsc --noEmit` and lint clean; navigation tests pass.
 - **Tests:** A test that the route tree mounts; a test that an unknown dynamic id renders the
-  not-found state.
+  not-found state. **Delivered:** `app/__tests__/route-tree.test.tsx` (the 27 routes are reached and
+  each renders its screen), `app/__tests__/navigation.test.tsx` (10 cases: the root redirect, the
+  admin entry and its label, the unknown route, a malformed id, a valid id, the two not-found
+  actions, the system back action), `app/__tests__/root-layout.test.tsx` (the root surface) and
+  `src/components/feedback/__tests__/ToastHost.test.tsx` (4 cases).
 - **Definition of done:** The complete navigation skeleton exists and is navigable; no screen logic
   beyond placeholders.
 - **Depends on:** S01, S02.
+- **Completed:** S04 — 108 tests pass, `typecheck`/`lint` clean, `expo export` (android) succeeds.
+  `expo-doctor` reports two pre-existing advisories from S01 (the `react-dom` peer of
+  `react-native-web` and two patch-version drifts: `expo` 57.0.30 vs 57.0.31, `expo-router`
+  57.0.28 vs 57.0.29) — no blocking error, and `package.json` was not touched in this step. The
+  route tree deviation of R-26 is flagged for confirmation.
 
 ---
 
 ## Phase 2 — The Client Request Journey
 
-### [ ] S05 — Welcome screen
+### [x] S05 — Welcome screen
 
 - **Objective:** Deliver the first screen the client sees, per `design.md` §"Welcome".
 - **Scope:** `app/(client)/welcome.tsx` and the screen it renders.
@@ -233,14 +247,29 @@ admin screens that consume it.
   `src/features/request/components/welcome-hero.tsx`, dictionary updates.
 - **Data & state:** Reads the draft store's existence flag.
 - **Acceptance criteria:**
-  - [ ] The screen renders in both FR and EN with no hardcoded string.
-  - [ ] The primary CTA is the single dominant action.
-  - [ ] The language switch changes all visible copy immediately, with no restart.
-  - [ ] The admin simulation entry is visible and labelled.
-  - [ ] The screen is usable at 360×640 dp.
+  - [x] The screen renders in both FR and EN with no hardcoded string.
+  - [x] The primary CTA is the single dominant action.
+  - [x] The language switch changes all visible copy immediately, with no restart.
+  - [x] The admin simulation entry is visible and labelled.
+  - [x] The screen is usable at 360×640 dp.
 - **Tests:** A render test (FR and EN), a test that the language switch changes the CTA label.
 - **Definition of done:** The Welcome screen matches `design.md` and is fully localised.
 - **Depends on:** S02, S03, S04.
+- **Completed:** S05 — 120 tests pass, `typecheck`/`lint` clean, `expo export` (android) succeeds.
+  **Delivered:** `app/(client)/welcome.tsx` (thin composition), the `WelcomeScreen`
+  (`src/features/request/screens/welcome-screen.tsx`) and the three domain components
+  (`welcome-hero.tsx` with the `assets/mon-precepteur-logo.png` lock-up,
+  `welcome-reassurance-list.tsx`, `welcome-continue-sheet.tsx`), the `welcome.*` and
+  `admin.simulation.badge` copy in both dictionaries, and `expo-env.d.ts` (the `*.png` module
+  declaration). The "continue your request" entry and the restoring spinner are driven by the
+  `hasDraft` / `restorationState` props, which keep their defaults until S13/S14 (R-29). The
+  layout order and the reassurance group label are recorded in `design.md` W-01; R-14 (logo) is
+  closed. **Device fix (R-30):** switching the language crashed the app in development because
+  NativeWind compiles `shadow-elevation-*` into a CSS variable and re-serialises the component
+  props when such a class appears at runtime; the `SegmentedControl` and the `Card` now always
+  resolve a shadow class, and the rule is recorded in `context/ui-context.md` §5.1.
+
+---
 
 ### [ ] S06 — Request-type selection
 

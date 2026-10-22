@@ -56,6 +56,43 @@ Administration (simulation) → Admin dashboard → Request detail
    └─ Activity history
 ```
 
+### 2.1 Route titles
+
+Every screen except Welcome and Submitted shows a header with a back button and a centred title.
+The title is never the file name: it comes from the `nav.*` keys of the dictionaries and is set by
+the stack layout.
+
+| Route | English | Français |
+|---|---|---|
+| `/request-type` | Request type | Type de demande |
+| `/children` | Children | Enfants |
+| `/children/form` | Child details | Détails de l'enfant |
+| `/needs/child/[childId]` | Needs | Besoins |
+| `/needs/self` | Needs | Besoins |
+| `/contact` | Contact details | Coordonnées |
+| `/pin` | PIN | Code PIN |
+| `/review` | Review and submit | Vérifier et envoyer |
+| `/dashboard` | Dashboard | Tableau de bord |
+| `/proposal/[proposalId]` | Proposal | Proposition |
+| `/contract/[contractId]` | Contract | Contrat |
+| `/invoice/[invoiceId]` | Invoice | Facture |
+| `/payment/[invoiceId]` | Payment | Paiement |
+| `/receipt/[receiptId]` | Receipt | Reçu |
+| `/tutor/[needId]` | Tutor | Précepteur |
+| `/notifications` | Notifications | Notifications |
+| `/admin` | Admin dashboard | Tableau de bord admin |
+| `/admin/request/[requestId]` | Request detail | Détail de la demande |
+| `/admin/proposal/new` | Proposal builder | Création de la proposition |
+| `/admin/contract/new` | Contract preparation | Préparation du contrat |
+| `/admin/invoice/new` | Invoice preparation | Préparation de la facture |
+| `/admin/payment/[paymentId]` | Payment verification | Vérification du paiement |
+| `/admin/receipt/issue` | Receipt issuance | Émission du reçu |
+| `/admin/assignment` | Tutor assignment | Affectation du précepteur |
+| `/admin/history` | Activity history | Historique d'activité |
+
+The admin stack uses the `surface-highest` header background, and the admin workspace always
+carries the simulation notice of §9.
+
 ---
 
 ## 3. The Request Flow Header
@@ -91,16 +128,20 @@ review):
 - **Purpose:** Introduce Mon Précepteur and invite the client to start, with no forced registration.
 - **Target user:** Any visitor; a returning client (a persisted draft or an existing client profile).
 - **Entry point:** App launch. Also the back target of the whole request flow.
-- **Primary action:** "Get Started" → Request type sheet.
+- **Primary action:** "Get Started" → Request type sheet (`/request-type`).
 - **Secondary actions:** "Continue your request" (only when a draft exists — opens a sheet);
   "Administration (simulation)" → the admin workspace; the language switch.
 - **Content:**
-  - The brand lock-up (wordmark; see R-14 for the missing logo).
+  - The brand lock-up: the logo asset `assets/mon-precepteur-logo.png` above the wordmark and the
+    tagline. The wordmark is text, the tagline is the only `accessibilityRole="header"`.
   - A one-paragraph value proposition: *"Describe your learning need. We find the tutor, prepare the
     contract, and handle the paperwork."*
   - Three reassurance points (icon + one line): a suitable tutor is chosen for you; a written
     contract; payment verified before the service starts.
   - The language switch (`SegmentedControl`: FR / EN).
+- **Layout order (implemented):** brand lock-up → value proposition → **primary CTA** →
+  reassurance points → language switch → secondary actions. The CTA is the first focusable element
+  and the single dominant action; everything below it is secondary.
 - **Validation:** None.
 - **Loading state:** While the app restores the persisted state, a centred spinner replaces the
   content area.
@@ -113,6 +154,10 @@ review):
 - **Accessibility:** The heading is the only `accessibilityRole="header"`. The CTA is the first
   focusable element. The three reassurance points are grouped as a list with a label. The language
   switch announces the selected language.
+- **Implementation seams (S05):** the screen receives `hasDraft` and `restorationState` as props
+  until the persistence layer (S13) and the draft store (S14) exist. Both default to "no draft" and
+  "idle", so the "continue" entry and the restoring spinner are not reachable yet. The
+  "continue your request" sheet exists and is exercised by the tests, but stays hidden.
 - **Labels:**
 
 | English | Français |
@@ -123,10 +168,14 @@ review):
 | A tutor chosen for your needs | Un précepteur adapté à vos besoins |
 | A written contract | Un contrat écrit |
 | Payment verified before starting | Un paiement vérifié avant de commencer |
+| What we take care of for you | Ce que nous prenons en charge pour vous |
 | Get Started | Commencer |
 | Continue your request | Reprendre votre demande |
 | Administration (simulation) | Administration (simulation) |
+| Simulation | Simulation |
 | Language | Langue |
+| Some information could not be restored. You can start again. | Certaines informations n'ont pas pu être restaurées. Vous pouvez recommencer. |
+| Your request was saved. Continue where you stopped. | Votre demande a été enregistrée. Reprenez là où vous vous êtes arrêté. |
 
 ---
 
@@ -1219,7 +1268,7 @@ review):
 | Request type | "Get Started" | Two options | Choose | Swipe / back |
 | Child form | "Add a child" | The child fields | Save | Swipe / back |
 | Need form | "Add a need" | The need fields | Save | Swipe / back |
-| Language | The FR/EN control | A short list | Choose | Swipe / back |
+| Language | The FR/EN control (not used on Welcome: the control switches the copy directly) | A short list | Choose | Swipe / back |
 | Continue request | Welcome, when a draft exists | A summary + a choice | Continue | Swipe / back |
 | Rejection reason | "Decline" | An optional textarea | Confirm | Swipe / back |
 | Signature | "Sign the contract" | The typed name | Sign | Swipe / back |
@@ -1334,6 +1383,36 @@ without replacing the underlying behaviour with a real integration.
 | `error.restored` | Some information could not be restored. | Certaines informations n'ont pas pu être restaurées. |
 | `error.unknown` | Something went wrong. Try again. | Une erreur est survenue. Réessayez. |
 | `error.notFound` | We could not find this information. | Nous n'avons pas trouvé cette information. |
+| `error.notFoundTitle` | Not found | Introuvable |
+
+### 12.1 The not-found state
+
+- **When:** an unknown route, or a route whose dynamic id does not exist or is malformed (an id
+  whose prefix does not match the entity, e.g. `/proposal/xyz`).
+- **It is a full-screen state**, never a toast and never a blank screen.
+- **Content:** a title, one explanatory sentence and a single action.
+- **Action:** returns to the dashboard for a screen reached from the client journey; returns to the
+  Welcome screen for an unknown route. The action is a replacement, not a new step in the stack.
+- **The screen keeps the header of the stack it belongs to** (the administrator sees the admin
+  header).
+- **Accessibility:** the block is announced as an alert; the title is the only heading.
+- **Labels:**
+
+| English | Français |
+|---|---|
+| Not found | Introuvable |
+| We could not find this information. | Nous n'avons pas trouvé cette information. |
+| Back to the dashboard | Retour au tableau de bord |
+| Back home | Retour à l'accueil |
+
+### 12.2 Common labels used by the navigation shell
+
+| Key | English | Français |
+|---|---|---|
+| `common.backHome` | Back home | Retour à l'accueil |
+| `common.backToDashboard` | Back to the dashboard | Retour au tableau de bord |
+| `admin.simulation.title` | Administration (simulation) | Administration (simulation) |
+| `admin.simulation.banner` | Simulation — this workspace is a local demonstration with no authentication. | Simulation — cet espace de travail est une démonstration locale, sans authentification. |
 
 ---
 
@@ -1382,7 +1461,7 @@ without replacing the underlying behaviour with a real integration.
 
 | Gap | Note |
 |---|---|
-| No final logo | See R-14; the wordmark is used |
+| No final logo | Closed in S05 — `assets/mon-precepteur-logo.png` is the brand lock-up (see R-14) |
 | No illustration assets | Empty states are icon-only |
 | The admin namespace is FR-only | See R-15 |
 | The "Operational check (to be defined)" placeholder | See R-06 — the real rule is required before production |

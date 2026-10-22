@@ -34,7 +34,7 @@ export function Card({
 
   const baseClass = [
     'rounded-card border border-outline-variant bg-surface-container p-l',
-    elevated ? 'shadow-elevation-2' : '',
+    elevated ? 'shadow-elevation-2' : 'shadow-none',
     className ?? '',
   ].join(' ');
 

@@ -1,9 +1,12 @@
 import { renderRouter, screen } from 'expo-router/testing-library';
 
 describe('Root layout', () => {
-  it('should render the application surface', async () => {
-    await renderRouter();
+  it('should render the application surface on the welcome screen', async () => {
+    const result = renderRouter();
 
-    expect(screen.getByText('Mon Précepteur')).toBeTruthy();
+    await result;
+
+    expect(result.getPathnameWithParams()).toBe('/welcome');
+    expect(screen.getByTestId('welcome-get-started')).toBeTruthy();
   });
 });

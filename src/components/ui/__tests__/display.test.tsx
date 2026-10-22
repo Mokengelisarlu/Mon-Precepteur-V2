@@ -45,6 +45,16 @@ describe('Card', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it('resolves a shadow class whether it is elevated or not', async () => {
+    const { getByText, rerender } = await render(<Card title="Request" />);
+
+    expect(getByText('Request').parent?.props.className).toContain('shadow-none');
+
+    await rerender(<Card title="Request" elevated />);
+
+    expect(getByText('Request').parent?.props.className).toContain('shadow-elevation-2');
+  });
 });
 
 describe('Surface', () => {

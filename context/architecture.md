@@ -212,7 +212,7 @@ app/
 │   ├── receipt/[receiptId].tsx       # 7f. Receipt
 │   ├── tutor/[needId].tsx            # 7g. Assigned tutor for a need
 │   └── notifications.tsx             # 7h. Notifications
-└── (admin)/
+└── admin/                            # URL segment, NOT a group — see below
     ├── _layout.tsx                   # Admin Stack (visually distinct header)
     ├── index.tsx                     # A1. Admin dashboard (incoming requests)
     ├── request/[requestId].tsx       # A2. Request detail (client, children, needs)
@@ -225,22 +225,44 @@ app/
     └── history.tsx                   # A9. Activity history
 ```
 
+**Why `admin/` is a segment and not a group (S04 — R-26).** Expo Router removes the group
+segments from the URL, so an `(admin)` group would publish `/request/[requestId]`,
+`/payment/[paymentId]` and `/receipt/issue` — three URLs that either collide with the client
+routes (`/payment/[invoiceId]`, `/receipt/[receiptId]`) or lose their namespace, and an `(admin)`
+index would also collide with the client index. The administrator's URLs are part of the
+specification (§3.2), so the administrator tree is a **URL segment** (`app/admin/`) and the client
+tree stays a **group** (`app/(client)/`), whose URLs are flat as specified.
+
+**URLs are built, never concatenated.** `src/lib/navigation/routes.ts` exports the typed builders
+(`routes.proposal(id)`, `routes.adminPayment(id)`) and the `ClientRoute` / `AdminRoute` unions. A
+screen never assembles a path by hand.
+
+**Entity ids are validated at runtime.** `src/lib/navigation/params.ts` holds the entity-id
+prefixes and their patterns (`prp_…`, `inv_…`, …). A dynamic segment whose value does not match
+its pattern renders the not-found state instead of the screen.
+
+
 ### 3.2 Route parameter types
 
 Typed with Expo Router's `expo-env.d.ts` global route types. Dynamic segments are always
 validated at runtime before use — a malformed ID shows the not-found state rather than crashing.
+The validation uses the entity-id prefixes of §6.3 (`src/lib/navigation/params.ts`).
 
-| Route | Params |
-|---|---|
-| `/needs/child/[childId]` | `childId: string` |
-| `/proposal/[proposalId]` | `proposalId: string` |
-| `/contract/[contractId]` | `contractId: string` |
-| `/invoice/[invoiceId]` | `invoiceId: string` |
-| `/payment/[invoiceId]` | `invoiceId: string` |
-| `/receipt/[receiptId]` | `receiptId: string` |
-| `/tutor/[needId]` | `needId: string` |
-| `/admin/request/[requestId]` | `requestId: string` |
-| `/admin/payment/[paymentId]` | `paymentId: string` |
+| Route | Params | Validated prefix |
+|---|---|---|
+| `/needs/child/[childId]` | `childId: string` | `chd_` |
+| `/proposal/[proposalId]` | `proposalId: string` | `prp_` |
+| `/contract/[contractId]` | `contractId: string` | `ctr_` |
+| `/invoice/[invoiceId]` | `invoiceId: string` | `inv_` |
+| `/payment/[invoiceId]` | `invoiceId: string` | `inv_` |
+| `/receipt/[receiptId]` | `receiptId: string` | `rcp_` |
+| `/tutor/[needId]` | `needId: string` | `ned_` |
+| `/admin/request/[requestId]` | `requestId: string` | `req_` |
+| `/admin/payment/[paymentId]` | `paymentId: string` | `pay_` |
+
+The client declares the payment **for an invoice**, so `/payment/…` carries the *invoice* id
+(`inv_…`); the administrator verifies a *payment*, so `/admin/payment/…` carries the *payment* id
+(`pay_…`).
 
 ### 3.3 Navigation rules
 
@@ -255,6 +277,10 @@ validated at runtime before use — a malformed ID shows the not-found state rat
   gesture.
 - **No modal route blocks the stack**: bottom sheets and dialogs are used for secondary choices,
   and are implemented as components (not routes) so the native back gesture is never trapped.
+- **Every screen has a translated header title.** The title comes from the `nav.*` keys of the
+  dictionaries and is set by the stack layout, never from the route file name. The Welcome and
+  Submitted screens have no header. The admin stack uses the `surface-highest` background and the
+  "Administration (simulation)" title.
 
 ---
 
@@ -264,7 +290,7 @@ Each domain owns its screens, components, hooks, services, storage adapter and t
 
 | Feature | Owns | Does **not** own |
 |---|---|---|
-| `request` | The request draft, the needs builder, the review screen, submission, request status derivation | Contract/payment logic |
+| `request` | The request draft, the needs builder, the review screen, submission, request status derivation, the welcome screen | Contract/payment logic |
 | `client` | Client profile, contact form, PIN, session unlock | Request content |
 | `children` | Child records, child form, child list | The needs attached to a child |
 | `proposal` | Proposal creation, client acceptance/rejection | Contract text, invoice amounts |
@@ -940,9 +966,9 @@ precepteur/
 ├── src/
 │   ├── components/
 │   │   ├── ui/                    # Button, Input, Select, Card, Sheet, Badge, Timeline, Toast, Icon, … (see ui-context §5)
-│   │   └── feedback/              # ErrorBoundary (ToastHost in S04, InlineError as needed)
+│   │   └── feedback/              # ErrorBoundary, ToastHost, NotFound, RoutePlaceholder (S04)
 │   ├── features/
-│   │   ├── request/               # draft store, needs builder, review, submission
+│   │   ├── request/               # draft store, needs builder, review, submission, welcome screen
 │   │   ├── client/                # profile, contact, PIN
 │   │   ├── children/
 │   │   ├── proposal/
@@ -959,11 +985,12 @@ precepteur/
 │   │   ├── i18n/                  # locales/en.ts, locales/fr.ts, index.ts
 │   │   ├── crypto/                # pin hashing
 │   │   ├── format/                # currency, date, relative time
+│   │   ├── navigation/             # routes.ts (typed builders), params.ts (entity-id validation) — S04
 │   │   ├── theme/                 # tokens.json (single source of truth) + typed helpers
 │   │   └── result.ts
 │   ├── store/
 │   └── types/
-├── assets/                        # icon, splash, adaptive icons (reused from the V1 prototype)
+├── assets/                        # icon, splash, adaptive icons (reused from the V1 prototype) + mon-precepteur-logo.png (brand lock-up, S05)
 ├── jest/                          # Jest-only module mocks (bottom-sheet-mock.js)
 ├── app.json
 ├── babel.config.js                # jsxImportSource: 'nativewind'
@@ -974,6 +1001,7 @@ precepteur/
 ├── eslint.config.js
 ├── jest.config.js
 ├── jest.setup.js
+├── expo-env.d.ts                  # ambient declaration for image imports (S05)
 ├── tsconfig.json
 └── package.json
 ```
@@ -984,6 +1012,8 @@ spacing, radii, typography, elevation and motion. `tailwind.config.js` requires 
 `motion`, `themeColor`). It belongs in `src/lib` because it is cross-cutting and imports nothing
 from `src/features`, `src/store` or `src/components`. The `jest/` folder holds Jest-only module
 mocks (currently the bottom-sheet mock, which renders its children only when the sheet is open).
+`expo-env.d.ts` was added in **S05**: it declares the `*.png` module so a bundled asset can be
+imported with a type instead of `require`, and it is ignored by ESLint.
 
 ### 12.1 Configuration files (reference content)
 
@@ -1071,3 +1101,4 @@ Full scenario list: `context/test-plan.md`.
 | AD-10 | Notifications store i18n keys | Past notifications re-render correctly after a language switch | Storing rendered strings |
 | AD-11 | Custom lightweight i18n over `expo-localization` | The brief asks for the localisation *structure*, not a translation platform; a typed dictionary gives compile-time FR/EN parity | `i18n-js` / `react-i18next` (extra dependency for the same outcome) |
 | AD-12 | SHA-256 salted PIN hash via `expo-crypto` | Satisfies "never store a PIN in plain text" with zero extra native dependencies; explicitly not production auth | `expo-secure-store` (still not real auth); a native Argon2 module (new dependency) |
+| AD-13 | The administrator's route tree is a URL segment (`app/admin/`), not a group | Expo Router strips the group segments from the URL, so an `(admin)` group would publish `/payment/…` and `/receipt/…` and would shadow the client routes; the segment produces the `/admin/...` URLs of §3.2 exactly (R-26) | `(admin)` group (collides with `/payment/[invoiceId]`, `/receipt/[receiptId]` and the client index) |

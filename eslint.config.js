@@ -8,6 +8,7 @@ module.exports = [
   {
     files: ['**/*.ts', '**/*.tsx'],
     rules: {
+      'import/no-unresolved': ['error', { ignore: ['\\.png$'] }],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',

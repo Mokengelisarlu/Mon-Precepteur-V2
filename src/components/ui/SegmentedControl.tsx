@@ -41,7 +41,7 @@ export function SegmentedControl({
             onPress={() => onChange(option.value)}
             className={[
               'min-h-[44px] flex-1 items-center justify-center rounded-button px-s',
-              isSelected ? 'bg-surface shadow-elevation-1' : '',
+              isSelected ? 'bg-surface shadow-elevation-1' : 'shadow-none',
             ].join(' ')}
           >
             <Text

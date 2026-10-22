@@ -28,9 +28,9 @@ already ships a Material-3 palette and assets.
 **Unresolved / not established by evidence** — recorded rather than invented:
 
 - The **logo mark** itself. V1's `src/components/Logo.tsx` is an SVG placeholder explicitly marked
-  "replace with the real logo". V2 carries the icon/splash **assets** but **no final logo
-  lock-up**. Until a real logo is supplied, the wordmark "Mon Précepteur" is used. **Needs
-  approval.**
+  "replace with the real logo". **Resolved in S05:** the brand owner supplied
+  `assets/mon-precepteur-logo.png`, used as the Welcome lock-up above the wordmark. The app icon,
+  splash and adaptive-icon assets are unchanged.
 - **Dark mode.** V1 ships `userInterfaceStyle: "light"` only. V2 stays light-only in the
   prototype; the token structure must nevertheless allow a future dark palette. **Decided:
   light-only.**
@@ -258,11 +258,36 @@ the icon never replaces a text label for an action.
 
 All live in `src/components/ui/` and are exported from a single `index.ts` barrel.
 `src/components/feedback/ErrorBoundary.tsx` holds the screen-level error boundary.
+`src/components/feedback/ToastHost.tsx` holds the toast provider (built in **S04**).
+`src/components/feedback/NotFound.tsx` holds the "not found" state used by the unknown-route screen
+and by any screen that receives an unknown id (built in **S04**). It is **presentational**: the
+title, the description and the action label are passed in, so the copy comes from the dictionaries
+and the action stays in the screen.
+`src/components/feedback/RoutePlaceholder.tsx` holds the temporary placeholder rendered by the route
+files until the real screen is built (**S04** scaffold — each route file renders its own path). It
+is not part of the design system and disappears as the screens are delivered.
 
 Every component is **controlled** (the caller owns the value) and **stateless** except for the
 transient UI state they own (an open sheet, a draft selection, a toast timer). **No component
 hardcodes a user-facing string**: labels, placeholders, helper texts and button texts are passed as
 props, because the i18n dictionaries arrive in **S03**.
+
+### 5.1 Runtime `className` changes — the shadow rule (R-30)
+
+A component whose `className` changes with its state must **always resolve the same set of utility
+families**. NativeWind compiles the shadow utilities into a CSS **variable**
+(`--tw-shadow-color`); when such a class appears for the first time at runtime, NativeWind raises a
+development-only "upgrade" warning that serialises the component props — and that serialisation
+walks the React internals and crashes the app with `Couldn't find a navigation context`
+(**R-30**).
+
+The rule is therefore:
+
+- A component with a state-dependent `className` **always carries a shadow class**:
+  `shadow-elevation-1/2/3` when the elevation is on, `shadow-none` when it is off.
+- `shadow-none` is transparent with an elevation of `0` — it is visually identical to no shadow.
+- No other utility family is affected: `bg-*`, `text-*`, spacing, radius and typography are safe
+  to toggle at runtime.
 
 | Component | Purpose | Notes |
 |---|---|---|
@@ -286,7 +311,7 @@ props, because the i18n dictionaries arrive in **S03**.
 | `EmptyState` | No-content placeholder | Icon, title, description, optional CTA. |
 | `ErrorState` | Recoverable error | Icon, title, description, "Try again" action. |
 | `Skeleton` | Loading placeholder | Matches the shape of the content it replaces. Static (no shimmer) so it never disturbs a test or a reduced-motion user. |
-| `Toast` | Transient feedback | Success / error / info. Auto-dismiss 3 s. Never used for information the user must act on. The provider that stacks the toasts is built in **S04**. |
+| `Toast` | Transient feedback | Success / error / info. Auto-dismiss 3 s. Never used for information the user must act on. The provider that stacks the toasts is `ToastHost` (built in **S04**). |
 | `Alert` | Inline message block | A persistent, dismissible block inside a card: `info`, `warning`, `error`, `success`. Used for the simulation notices and the duplicate-transaction warning. Announced with `role="alert"` when it is an error. |
 | `ProgressBar` | Progress indicator | Optional label and percentage; the value is exposed to the accessibility tree as a `progressbar`. |
 | `Stepper` | Ordered step indicator | Used on the request flow header. |
@@ -419,7 +444,7 @@ common denominator for budget Android devices in the DRC.
 
 | Gap | Impact | Proposed handling |
 |---|---|---|
-| No final logo mark | The app opens with the wordmark only | Use the wordmark; the icon asset is already final. Needs a real logo to close the gap. |
+| ~~No final logo mark~~ | ~~The app opens with the wordmark only~~ | **Closed in S05** — `assets/mon-precepteur-logo.png` is the lock-up; the wordmark stays as text |
 | No illustrations / empty-state artwork | Empty states are icon-only | Acceptable; icons are drawn from Lucide. Add illustrations later if requested. |
 | No dark mode | Light only | Accepted for the prototype |
 | ~~Semantic status colours unapproved~~ | ~~Status badges depend on them~~ | **Closed in S02** — approved (R-13), see §3.3 |

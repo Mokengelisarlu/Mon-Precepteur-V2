@@ -4,6 +4,8 @@ export const fr: Record<TranslationKey, string> = {
   'common.add': 'Ajouter',
   'common.appName': 'Mon Précepteur',
   'common.back': 'Retour',
+  'common.backHome': "Retour à l'accueil",
+  'common.backToDashboard': 'Retour au tableau de bord',
   'common.cancel': 'Annuler',
   'common.close': 'Fermer',
   'common.confirm': 'Confirmer',
@@ -24,6 +26,32 @@ export const fr: Record<TranslationKey, string> = {
 
   'dashboard.needsCount_one': '{count} besoin',
   'dashboard.needsCount_other': '{count} besoins',
+
+  'nav.adminAssignment': 'Affectation du précepteur',
+  'nav.adminContract': 'Préparation du contrat',
+  'nav.adminDashboard': 'Tableau de bord admin',
+  'nav.adminHistory': "Historique d'activité",
+  'nav.adminInvoice': 'Préparation de la facture',
+  'nav.adminPaymentVerification': 'Vérification du paiement',
+  'nav.adminProposal': 'Création de la proposition',
+  'nav.adminReceipt': 'Émission du reçu',
+  'nav.adminRequest': 'Détail de la demande',
+  'nav.childForm': "Détails de l'enfant",
+  'nav.childNeeds': 'Besoins',
+  'nav.children': 'Enfants',
+  'nav.contact': 'Coordonnées',
+  'nav.contract': 'Contrat',
+  'nav.dashboard': 'Tableau de bord',
+  'nav.invoice': 'Facture',
+  'nav.notifications': 'Notifications',
+  'nav.payment': 'Paiement',
+  'nav.pin': 'Code PIN',
+  'nav.proposal': 'Proposition',
+  'nav.receipt': 'Reçu',
+  'nav.requestType': 'Type de demande',
+  'nav.review': 'Vérifier et envoyer',
+  'nav.selfNeeds': 'Besoins',
+  'nav.tutor': 'Précepteur',
 
   'validation.child.age': "L'âge doit être compris entre 3 et 25 ans",
   'validation.child.birthDate': 'Saisissez une date de naissance valide',
@@ -57,10 +85,34 @@ export const fr: Record<TranslationKey, string> = {
 
   'error.network': 'Aucune connexion. Réessayez.',
   'error.notFound': "Nous n'avons pas trouvé cette information.",
+  'error.notFoundTitle': 'Introuvable',
   'error.restored': "Certaines informations n'ont pas pu être restaurées.",
   'error.storage':
     "Nous n'avons pas pu enregistrer vos modifications. Elles peuvent être perdues.",
   'error.unknown': 'Une erreur est survenue. Réessayez.',
+
+  'admin.simulation.title': 'Administration (simulation)',
+  'admin.simulation.banner':
+    "Simulation — cet espace de travail est une démonstration locale, sans authentification.",
+  'admin.simulation.badge': 'Simulation',
+
+  'welcome.tagline': 'Votre besoin, notre précepteur.',
+  'welcome.proposition':
+    'Décrivez votre besoin. Nous trouvons le précepteur, préparons le contrat et gérons les formalités.',
+  'welcome.point.tutor': 'Un précepteur adapté à vos besoins',
+  'welcome.point.contract': 'Un contrat écrit',
+  'welcome.point.payment': 'Un paiement vérifié avant de commencer',
+  'welcome.reassuranceLabel': 'Ce que nous prenons en charge pour vous',
+  'welcome.cta': 'Commencer',
+  'welcome.continueRequest': 'Reprendre votre demande',
+  'welcome.language': 'Langue',
+  'welcome.language.fr': 'FR',
+  'welcome.language.en': 'EN',
+  'welcome.restorationFailed':
+    "Certaines informations n'ont pas pu être restaurées. Vous pouvez recommencer.",
+  'welcome.continueSheet.title': 'Reprendre votre demande',
+  'welcome.continueSheet.summary':
+    'Votre demande a été enregistrée. Reprenez là où vous vous êtes arrêté.',
 
   'status.request.received': 'Demande reçue',
   'status.request.under_review': "En cours d'analyse",

@@ -33,7 +33,7 @@ postponed).
 | R-11 | Client notification channels | Decision | **Yes** | S23 | Proposed |
 | R-12 | Privacy of children's information | Risk | **Yes** | Production | Open |
 | R-13 | Semantic status colours are not part of the inherited MD3 palette | Decision | **Yes** | — | **Accepted (S02)** |
-| R-14 | No final logo mark | Gap | No | — | Open |
+| R-14 | No final logo mark | Gap | No | — | **Closed (S05)** |
 | R-15 | Admin workspace is French-only in the prototype | Decision | **Yes** | S15 | Proposed |
 | R-16 | Payment evidence attachment requires `expo-image-picker` | Decision | **Yes** | S19 | Open |
 | R-17 | The prototype has no authentication and no access control | Risk | No | — | Accepted |
@@ -45,6 +45,11 @@ postponed).
 | R-23 | The target dependency manifest had to be adjusted for SDK 57 | Risk | **Yes** | — | Proposed |
 | R-24 | SDK 57 changed the app-configuration schema | Audit fact | No | — | Closed |
 | R-25 | S02 scope: shadow tokens, deferred `DateField`/`Attachment`, `ToastHost` in S04 | Decision | **Yes** | — | **Accepted (S02)** |
+| R-26 | The admin route tree is a URL segment (`app/admin/`), not a group | Decision | **Yes** | — | Proposed |
+| R-27 | A dynamic param of the previous screen leaks into the URL after a replace | Risk | No | — | Accepted |
+| R-28 | The S04 placeholders render raw route paths, and the header titles were derived from `design.md` | Decision | No | S05+ | Accepted |
+| R-29 | The S05 Welcome seams (`hasDraft`, `restorationState`) and the reassurance group label | Decision | No | S13/S14 | Accepted |
+| R-30 | NativeWind crashes in dev when a shadow utility is added to a `className` at runtime | Risk | No | — | Accepted (mitigated in S05) |
 
 ---
 
@@ -251,15 +256,16 @@ postponed).
 ### R-14 — No final logo mark
 
 - **Description:** The V1 `Logo.tsx` is an SVG placeholder explicitly marked "replace with the real
-  logo". The icon, splash and adaptive-icon **assets** are final; the in-app logo lock-up is not.
-- **Impact:** The Welcome screen shows a wordmark instead of a logo. Low severity, visible on the
+  logo". The icon, splash and adaptive-icon **assets** are final; the in-app logo lock-up was not.
+- **Impact:** The Welcome screen showed a wordmark instead of a logo. Low severity, visible on the
   first screen.
 - **Proposed decision:** Use the wordmark "Mon Précepteur" and the existing icon asset. Request the
   final logo from the brand owner; when supplied, it replaces `src/features/request/components/`
   logo component only.
 - **Approval required:** No — proceed with the wordmark.
 - **Blocks implementation:** No.
-- **Status:** Open.
+- **Status:** **Closed in S05** — the brand owner supplied `assets/mon-precepteur-logo.png`, used as
+  the Welcome lock-up above the wordmark. The app icon, splash and adaptive icons are unchanged.
 
 ### R-15 — The admin workspace is French-only in the prototype
 
@@ -423,7 +429,121 @@ postponed).
 
 ---
 
-## 3. Decisions Requested From the User
+### R-26 — The admin route tree is a URL segment, not a group
+
+- **Description:** `context/architecture.md` §3.1 and the S04 task list both drew the administrator's
+  tree as an `(admin)` **group**. Expo Router removes the group segments from the URL, so an
+  `(admin)` group publishes `/request/[requestId]`, `/payment/[paymentId]` and `/receipt/issue` —
+  two of which collide with the client routes `/payment/[invoiceId]` and `/receipt/[receiptId]` —
+  and its index would also collide with the client index. §3.2, in contrast, specifies the
+  administrator's URLs as `/admin/...`.
+- **Impact:** The tree cannot be built as drawn: the administrator's screens would shadow the
+  client's payment and receipt routes, and the admin index would shadow the root. The URLs are the
+  part that is observable (deep links, the browser history, the tests), the group is only a folder.
+- **Decision (S04):** the administrator's tree is a **URL segment** — `app/admin/` — and the
+  client's tree stays a **group** — `app/(client)/` — whose URLs are flat as specified. The
+  `/admin/...` URLs of §3.2 are therefore produced exactly as written. `context/architecture.md`
+  §3.1 has been corrected and the rationale is recorded there.
+- **Approval required:** Yes — it changes the documented route tree (architecture §3.1) and the
+  expected files of S04. **Flagged in the S04 report; confirmation requested.**
+- **Blocks implementation:** No — the specification is contradictory, and the reading that satisfies
+  §3.2 was chosen.
+- **Status:** Proposed.
+
+---
+
+### R-27 — A dynamic param of the previous screen leaks into the URL after a replace
+
+- **Description:** When the not-found state of a dynamic route (for example
+  `/proposal/not-an-id`) replaces itself with the dashboard, the resulting URL is
+  `/dashboard?proposalId=not-an-id`: the parameter of the route being left is kept by the nested
+  navigator and is merged into the URL of the new route. This is the behaviour of Expo Router /
+  React Navigation, not a defect of the shell.
+- **Impact:** Cosmetic only — the dashboard ignores the extra query parameter. It is visible in the
+  URL and in the navigation state.
+- **Decision (S04):** accepted. The navigation test asserts the **screen** that is rendered
+  (`/dashboard`) rather than the exact URL. If the maintainer wants a clean URL, the fix is to
+  clear the params of the current route before replacing it, which must be done in one place
+  (`src/hooks/use-not-found-state.ts`).
+- **Approval required:** No — no behaviour depends on it.
+- **Blocks implementation:** No.
+- **Status:** Accepted.
+
+---
+
+### R-28 — The S04 placeholders and the derived header titles
+
+- **Description:** S04 delivers a navigation shell, so the route files render a placeholder instead
+  of a screen. Two consequences: (a) the placeholder prints the raw route path (`/dashboard`) —
+  a development string, not copy, and it disappears as the screens are delivered; (b) the header
+  titles were derived from the screen names of `design.md` (W-01…W-19, A-01…A-09) and added to the
+  dictionaries as the `nav.*` namespace, because `design.md` did not specify a header title per
+  route.
+- **Impact:** The `nav.*` keys are the shell's titles; when a screen is delivered, its title is
+  confirmed or replaced by the maintainer. The placeholder strings are not localised — they are
+  technical paths.
+- **Decision (S04):** the titles are documented in `design.md` §2.1 (route → title, EN/FR) and the
+  placeholders are declared as a temporary scaffold in `context/ui-context.md` §5. When a screen is
+  built, its placeholder is removed and its title confirmed.
+- **Approval required:** No — reversible at any time.
+- **Blocks implementation:** No.
+- **Status:** Accepted.
+
+---
+
+### R-29 — The S05 Welcome seams and the copy `design.md` did not specify
+
+- **Description:** S05 delivers the first real screen, and three points were not covered by
+  `design.md` W-01: (a) the draft check — the "continue your request" entry, the restoring spinner
+  and the restoration banner depend on a persisted draft, but `useRequestDraftStore` arrives in S14
+  and the persistence layer in S13; (b) the reassurance points must be "grouped as a list with a
+  label" (W-01, accessibility), and the label table of W-01 contained no label for that group;
+  (c) W-01 requires the CTA to be the first focusable element while its content list places the
+  reassurance points before the language switch.
+- **Impact:** until S13/S14, the "continue" entry and the restoring state cannot be reached in the
+  running app; one extra key per language is needed for the group label.
+- **Decision (S05):** the screen receives `hasDraft` and `restorationState` as props (both default
+  to "no draft" / "idle"), so the screen stays pure and testable and the store is created once, in
+  S14, with the right shape. The group label was added to both dictionaries and to the W-01 label
+  table. The layout order (lock-up → proposition → **CTA** → reassurance points → language switch →
+  secondary actions) was recorded in `design.md` W-01; it satisfies the accessibility requirement
+  and keeps the CTA above the fold at 360×640 dp.
+- **Approval required:** No — reversible; the seams disappear when the stores exist.
+- **Blocks implementation:** No.
+- **Status:** Accepted.
+
+---
+
+### R-30 — NativeWind crashes in development when a shadow utility is added at runtime
+
+- **Description:** switching the language on the Welcome screen crashed the app with
+  `Couldn't find a navigation context`. The cause is **not** in the navigation code: NativeWind
+  compiles `shadow-elevation-*` into a CSS **variable** (`--tw-shadow-color`). When a component's
+  `className` changes at runtime and a class with variables appears for the first time, NativeWind
+  (dev builds only) raises an "upgrade" warning and serialises the component props to print it.
+  That serialisation walks the React `_owner` fibres, reaches the `NavigationContainer` fibre, and
+  reads the *default* `NavigationStateContext` value — whose getters throw — so the warning itself
+  crashes the app. Only classes that NativeWind compiles to variables are affected; `bg-*`,
+  `text-*`, spacing and radius utilities are safe.
+- **Impact:** any state change that adds a shadow utility at runtime crashes the app in Expo Go
+  (development). Production builds are unaffected — the warning only exists in `NODE_ENV !==
+  "production"`.
+- **Decision (S05):** the rule is now *"a component that changes its `className` at runtime must
+  always resolve the same set of utility families"*. The `SegmentedControl` and the `Card` therefore
+  always carry a shadow class (`shadow-elevation-*` when the state is on, `shadow-none` otherwise),
+  so the shadow rule set is resolved on the first render and NativeWind never upgrades the
+  component. The visual result is unchanged (`shadow-none` is transparent, elevation `0`).
+  Regression tests assert the invariant. The same rule is recorded in `context/ui-context.md` §5.
+- **Alternatives rejected:** patching `node_modules` (not part of the repository, would be lost on
+  the next install); `patch-package` (a new dependency, and the upstream bug is not ours); providing
+  a custom `NavigationStateContext` (depends on Expo Router internals and leaves the warning in
+  place).
+- **Approval required:** No — the visible behaviour is unchanged; the rule is documented.
+- **Blocks implementation:** No.
+- **Status:** Accepted (mitigated in S05). The upstream NativeWind bug remains open upstream.
+
+---
+
 
 These are the items marked "Approval required: Yes" that are **not yet confirmed**. Each is
 small enough to answer in one line.
@@ -442,7 +562,10 @@ small enough to answer in one line.
 | Q10 | Is USD the correct currency for the prototype? | Yes (R-19) | S16 |
 | Q11 | Is the legal wording of the contract, and the consent flow for children's data, scheduled? | To be scheduled by the legal owner (R-08, R-12) | Production |
 | Q12 | Are the six toolchain packages added in S01 and the two npm `overrides` accepted? | Yes (R-23) | — |
+| Q13 | Is the administrator's route tree built as a URL segment (`app/admin/`) instead of an `(admin)` group? | Yes (R-26) | — |
 
 **None of these blocks the start of implementation.** S01 (project foundation) and S02 (tokens) are
 complete; Q7 was confirmed during S02, and R-13 is now accepted. Q12 does not block anything: the
-deviations are already installed and verified, and a later answer can trigger a re-pin.
+deviations are already installed and verified, and a later answer can trigger a re-pin. Q13 was
+raised by S04: the administrator's tree is a URL segment, so the `/admin/...` URLs of architecture
+§3.2 are produced as specified; a confirmation is requested but nothing is blocked.

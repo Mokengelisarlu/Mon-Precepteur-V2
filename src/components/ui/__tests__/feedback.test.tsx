@@ -185,4 +185,23 @@ describe('SegmentedControl', () => {
 
     expect(onChange).toHaveBeenCalledWith('b');
   });
+
+  it('resolves a shadow class on every segment, selected or not', async () => {
+    const { getByLabelText } = await render(
+      <SegmentedControl
+        options={[
+          { value: 'a', label: 'First' },
+          { value: 'b', label: 'Second' },
+        ]}
+        value="a"
+        onChange={() => undefined}
+      />,
+    );
+
+    const selected = getByLabelText('First');
+    const unselected = getByLabelText('Second');
+
+    expect(selected.props.className).toContain('shadow-elevation-1');
+    expect(unselected.props.className).toContain('shadow-none');
+  });
 });
