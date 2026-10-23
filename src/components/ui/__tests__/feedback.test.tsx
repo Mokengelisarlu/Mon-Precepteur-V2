@@ -37,6 +37,29 @@ describe('Sheet', () => {
     expect(getByText('Choose')).toBeTruthy();
     expect(getByText('Content')).toBeTruthy();
   });
+
+  it('renders a modal sheet above its parent and closes from the backdrop', async () => {
+    const onClose = jest.fn();
+    const { getByTestId, getByText } = await render(
+      <Sheet
+        visible
+        presentation="modal"
+        onClose={onClose}
+        title="Choose"
+        dismissLabel="Cancel"
+        testID="selector-sheet"
+      >
+        <Text>Option</Text>
+      </Sheet>,
+    );
+
+    expect(getByTestId('selector-sheet')).toBeTruthy();
+    expect(getByText('Option')).toBeTruthy();
+
+    await fireEvent.press(getByTestId('selector-sheet-backdrop', { includeHiddenElements: true }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('Dialog', () => {

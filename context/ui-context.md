@@ -294,8 +294,8 @@ The rule is therefore:
 | `Button` | Primary / secondary / tertiary / destructive | Variants: `filled`, `tonal`, `outlined`, `text` (there is no separate `ghost` variant — `text` covers it). Sizes: `sm`, `md`, `lg`. The loading state shows a spinner, sets `busy` and disables the button. `fullWidth` for form footers. |
 | `IconButton` | Icon-only action | Requires `accessibilityLabel`. Variants and sizes mirror `Button`. |
 | `Input` | Text field | Label above, helper/error text below, optional leading/trailing icon, `secureTextEntry` support, character counter when `maxLength` is set. |
-| `Select` | Select field | Opens a **bottom sheet** with a single-selection list (a check mark marks the selected option), not a platform picker. |
-| `MultiSelect` | Multi-choice select | Opens the same bottom sheet as `Select` with a checkbox list; the selection is applied on confirmation. Used for the covered needs of a proposal and the billable needs of an invoice. |
+| `Select` | Select field | Opens a **modal bottom sheet** with a single-selection list (a check mark marks the selected option), not a platform picker. Its modal presentation allows selectors to open above form sheets. |
+| `MultiSelect` | Multi-choice select | Opens the same modal bottom sheet as `Select` with a checkbox list; the selection is applied on confirmation. Used for the covered needs of a proposal and the billable needs of an invoice. |
 | `TextArea` | Multi-line input | Grows with the content between `minHeight` and `maxHeight`; shows a character counter when `maxLength` is set. |
 | `DateField` | Date field | **Deferred in S02** — requires `@react-native-community/datetimepicker`, which is not a dependency of the prototype. |
 | `PinInput` | 4-digit code entry | Boxes, digits only, auto-completes, accessible as a single field. |
@@ -317,7 +317,7 @@ The rule is therefore:
 | `Stepper` | Ordered step indicator | Used on the request flow header. |
 | `Timeline` | Vertical event timeline | A vertical list of dated events with a marker per entry; the current phase is highlighted. Used for the client dashboard timeline and the administrator's activity history. |
 | `Divider` | Horizontal rule | `outline-variant`. |
-| `KeyValue` | Label/value row | Used for contract, invoice and receipt detail blocks. |
+| `KeyValue` | Label/value row | Used for contract, invoice and receipt detail blocks. `selectableValue` enables text selection when clients need to copy a reference. |
 | `SegmentedControl` | 2–3 exclusive options | Used for the language switch and for format selection. |
 | `Icon` | Lucide wrapper | Centralises `react-native-svg`. The colour is a palette token name, never a raw hex value. |
 
@@ -435,7 +435,7 @@ common denominator for budget Android devices in the DRC.
 - **Stored content is never translated.** `titleKey` / `bodyKey` in notifications, and all
   status labels, are keys. User-entered content (names, objectives, notes) is stored verbatim and
   displayed as-is.
-- **Language switch**: a `SegmentedControl` in the Welcome screen and in the admin profile area.
+- **Language switch**: a `SegmentedControl` on the client dashboard and in the admin profile area.
   The choice is persisted in the session store and applied immediately without a restart.
 
 ---

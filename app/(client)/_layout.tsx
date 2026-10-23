@@ -19,9 +19,24 @@ export default function ClientLayout(): React.JSX.Element {
       }}
     >
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
-      <Stack.Screen name="request-type" options={{ title: t('nav.requestType') }} />
+      <Stack.Screen name="login" options={{ title: t('nav.login') }} />
+      <Stack.Screen
+        name="request-type"
+        options={{
+          presentation: 'transparentModal',
+          headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
       <Stack.Screen name="children" options={{ title: t('nav.children') }} />
-      <Stack.Screen name="children/form" options={{ title: t('nav.childForm') }} />
+      <Stack.Screen
+        name="children/form"
+        options={{
+          presentation: 'transparentModal',
+          headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
       <Stack.Screen name="needs/child/[childId]" options={{ title: t('nav.childNeeds') }} />
       <Stack.Screen name="needs/self" options={{ title: t('nav.selfNeeds') }} />
       <Stack.Screen name="contact" options={{ title: t('nav.contact') }} />

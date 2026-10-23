@@ -1,6 +1,5 @@
 import '../global.css';
 
-import { ErrorBoundary, ToastHost } from '@/components/feedback';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -8,6 +7,8 @@ import type React from 'react';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { ErrorBoundary, ToastHost } from '@/components/feedback';
 
 void SplashScreen.preventAutoHideAsync();
 

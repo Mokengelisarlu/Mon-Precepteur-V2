@@ -38,16 +38,19 @@
 
 ```
 Welcome
-└─ Request type (sheet)
-   ├─ For my child → Children list → Child form (sheet) → Child needs → Need form (sheet)
-   └─ For myself   → Adult needs → Need form (sheet)
-                                          ↓
-                              Contact details → PIN → Review & submit → Submitted
-                                          ↓
-                                   Client dashboard
-                                          ├─ Proposal → Contract → Invoice → Payment → Receipt
-                                          ├─ Assigned tutor
-                                          └─ Notifications
+├─ Get started
+│  ├─ Saved draft → resume
+│  └─ No saved draft → Request type (sheet)
+│     ├─ For my child → Children list → Child form (sheet) → Child needs → Need form (sheet)
+│     └─ For myself   → Adult needs → Need form (sheet)
+│                                            ↓
+│                                Contact details → PIN → Review & submit → Submitted
+│                                            ↓
+│                                     Client dashboard
+│                                            ├─ Proposal → Contract → Invoice → Payment → Receipt
+│                                            ├─ Assigned tutor
+│                                            └─ Notifications
+└─ Login → Login unavailable notice → Back home
 
 Administration (simulation) → Admin dashboard → Request detail
    ├─ Proposal builder → Contract preparation → Invoice preparation
@@ -64,6 +67,7 @@ the stack layout.
 
 | Route | English | Français |
 |---|---|---|
+| `/login` | Login | Connexion |
 | `/request-type` | Request type | Type de demande |
 | `/children` | Children | Enfants |
 | `/children/form` | Child details | Détails de l'enfant |
@@ -125,57 +129,63 @@ review):
 
 ### W-01 — Welcome
 
-- **Purpose:** Introduce Mon Précepteur and invite the client to start, with no forced registration.
-- **Target user:** Any visitor; a returning client (a persisted draft or an existing client profile).
+- **Purpose:** Introduce Mon Précepteur and offer the two entry actions, without forced registration.
+- **Target user:** Any visitor, including a returning client with a saved draft.
 - **Entry point:** App launch. Also the back target of the whole request flow.
-- **Primary action:** "Get Started" → Request type sheet (`/request-type`).
-- **Secondary actions:** "Continue your request" (only when a draft exists — opens a sheet);
-  "Administration (simulation)" → the admin workspace; the language switch.
+- **Actions:** "Get started" → resume a saved draft if one exists, otherwise open the W-02 request-type sheet;
+  "Login" → the unavailable notice screen (`/login`).
 - **Content:**
-  - The brand lock-up: the logo asset `assets/mon-precepteur-logo.png` above the wordmark and the
-    tagline. The wordmark is text, the tagline is the only `accessibilityRole="header"`.
-  - A one-paragraph value proposition: *"Describe your learning need. We find the tutor, prepare the
-    contract, and handle the paperwork."*
-  - Three reassurance points (icon + one line): a suitable tutor is chosen for you; a written
-    contract; payment verified before the service starts.
-  - The language switch (`SegmentedControl`: FR / EN).
-- **Layout order (implemented):** brand lock-up → value proposition → **primary CTA** →
-  reassurance points → language switch → secondary actions. The CTA is the first focusable element
-  and the single dominant action; everything below it is secondary.
+  - The existing logo asset and app name "Mon Précepteur"; remove the tagline.
+  - One paragraph explaining the managed tutoring service.
+  - Two large, full-width buttons: "Get started" and "Login".
+  - A small footer credit: "Powered by Mokengeli Sarlu" (translated in French).
+- **Layout order:** logo and app name → explanatory paragraph → flexible space → buttons → company
+  credit. Both buttons are bottom-aligned above the safe area.
+- **Nothing else is shown on this screen:** no reassurance list, language switch, admin entry,
+  continue-request action, restoration banner or other links.
 - **Validation:** None.
-- **Loading state:** While the app restores the persisted state, a centred spinner replaces the
-  content area.
+- **Loading state:** None on the Welcome screen; restoration is handled before the route renders.
 - **Empty state:** n/a — the welcome screen is always populated.
-- **Error state:** If restoration fails, a dismissible banner at the top: *"Some information could
-  not be restored. You can start again."*
+- **Error state:** n/a on this screen. Restoration failures use the app's standard error handling,
+  not additional Welcome content.
 - **Success state:** n/a.
-- **Navigation destinations:** Request type sheet; the admin workspace; the "continue" sheet.
-- **Required components:** `Button`, `SegmentedControl`, `Surface`, `Icon`, `Sheet`, `Badge`.
-- **Accessibility:** The heading is the only `accessibilityRole="header"`. The CTA is the first
-  focusable element. The three reassurance points are grouped as a list with a label. The language
-  switch announces the selected language.
-- **Implementation seams (S05):** the screen receives `hasDraft` and `restorationState` as props
-  until the persistence layer (S13) and the draft store (S14) exist. Both default to "no draft" and
-  "idle", so the "continue" entry and the restoring spinner are not reachable yet. The
-  "continue your request" sheet exists and is exercised by the tests, but stays hidden.
+- **Navigation destinations:** Request type selection, resumed draft, or Login unavailable screen.
+- **Required components:** `Button`, `SafeAreaView`, `ScrollView`.
+- **Accessibility:** The app name is the screen's only heading. Both actions have button roles,
+  visible labels and targets of at least 44 dp. Text scales and wraps without clipping.
+- **Implementation seam:** Draft auto-resume is enabled when the persistence and draft store arrive
+  in S13/S14. Until then, "Get started" opens the W-02 request-type sheet.
 - **Labels:**
 
 | English | Français |
 |---|---|
 | Mon Précepteur | Mon Précepteur |
-| Your need, our tutor. | Votre besoin, notre précepteur. |
-| Describe your learning need. We find the tutor, prepare the contract and handle the paperwork. | Décrivez votre besoin. Nous trouvons le précepteur, préparons le contrat et gérons les formalités. |
-| A tutor chosen for your needs | Un précepteur adapté à vos besoins |
-| A written contract | Un contrat écrit |
-| Payment verified before starting | Un paiement vérifié avant de commencer |
-| What we take care of for you | Ce que nous prenons en charge pour vous |
-| Get Started | Commencer |
-| Continue your request | Reprendre votre demande |
-| Administration (simulation) | Administration (simulation) |
-| Simulation | Simulation |
-| Language | Langue |
-| Some information could not be restored. You can start again. | Certaines informations n'ont pas pu être restaurées. Vous pouvez recommencer. |
-| Your request was saved. Continue where you stopped. | Votre demande a été enregistrée. Reprenez là où vous vous êtes arrêté. |
+| Find the perfect tutor for your child or for yourself. | Trouvez le précepteur idéal pour votre enfant ou pour vous-même. |
+| Get started | Commencer |
+| Login | Connexion |
+| Powered by Mokengeli Sarlu | Propulsé par Mokengeli Sarlu |
+
+### W-20 — Login unavailable (local prototype)
+
+- **Purpose:** Respond honestly when a visitor chooses Login before local account sign-in exists.
+- **Target user:** A returning client or any visitor who selects Login.
+- **Entry point:** The Login button on W-01.
+- **Primary action:** "Back home" → replace with Welcome (`/welcome`).
+- **Content:** A title and a short explanation that login is not available in this local prototype.
+  Do not show phone/PIN fields or imply that credentials are checked.
+- **Validation:** None.
+- **Loading, empty, error and success states:** None.
+- **Navigation destinations:** Welcome.
+- **Required components:** `Button`, `Text`.
+- **Accessibility:** The title is the only heading; the explanatory copy is plain text; the return
+  action is a labelled button with a target of at least 44 dp.
+- **Labels:**
+
+| English | Français |
+|---|---|
+| Login | Connexion |
+| Login is not available in this local prototype yet. | La connexion n'est pas encore disponible dans ce prototype local. |
+| Back home | Retour à l'accueil |
 
 ---
 
@@ -183,7 +193,7 @@ review):
 
 - **Purpose:** Ask who the tutoring is for, and route accordingly.
 - **Target user:** Any visitor.
-- **Entry point:** The "Get Started" CTA on Welcome.
+- **Entry point:** The "Get started" button on Welcome.
 - **Primary action:** Choose one of the two options.
 - **Secondary actions:** Dismiss the sheet (swipe down / back) → Welcome.
 - **Content:** A title, two large tappable options, each with an icon, a title and a one-line
@@ -203,7 +213,7 @@ review):
 
 | English | Français |
 |---|---|
-| Who needs tutoring? | Qui a besoin d'un précepteur ? |
+| Who would you like a tutor for? | Pour qui tu veux un précepteur ? |
 | For my child | Pour mon enfant |
 | Register your children and describe their school needs. | Enregistrez vos enfants et décrivez leurs besoins scolaires. |
 | For myself | Pour moi-même |
@@ -220,8 +230,8 @@ review):
 - **Secondary actions:** "Add a child" → the child form sheet; tap a child to edit; swipe or use
   the row's overflow to remove (with confirmation).
 - **Content:** The request-flow header (step 1 of 4); the list of children, each row showing an
-  initials avatar, the full name, the level, the age and the school; a hint line stating that a
-  child may have several needs.
+  initials avatar, the full name, the level, the estimated age and the school; a hint line stating
+  that a child may have several needs.
 - **Validation:** The "Continue" action is disabled while there is no child.
 - **Loading state:** A skeleton list of 2–3 rows.
 - **Empty state:** An illustration-free empty state (a people icon, a title, one sentence) with an
@@ -231,7 +241,8 @@ review):
 - **Navigation destinations:** Child form sheet (W-04); Child needs (W-05).
 - **Required components:** `ListItem`, `Avatar`, `Button`, `EmptyState`, `Sheet`, `Dialog`, `Toast`,
   `Stepper`.
-- **Accessibility:** Each row is one focusable element announcing the name, the level and the age.
+- **Accessibility:** Each row is one focusable element announcing the name, the level and the
+  estimated age.
   The remove action is reachable without swiping (an overflow button in the row) so it is not
   gesture-only.
 - **Labels:**
@@ -244,6 +255,7 @@ review):
 | Continue | Continuer |
 | No children yet | Aucun enfant pour l'instant |
 | Add your first child to start a request. | Ajoutez votre premier enfant pour commencer une demande. |
+| Estimated age: {age} | Âge estimé : {age} ans |
 | Child added. | Enfant ajouté. |
 | Remove this child? | Retirer cet enfant ? |
 | Remove | Retirer |
@@ -265,13 +277,15 @@ review):
 |---|---|---|---|
 | First name | Text | Yes | Prénom |
 | Last name | Text | No | Nom (facultatif) |
-| Date of birth | Date picker | Yes* | Date de naissance |
-| Age | Number | Yes* | Âge |
+| Year of birth | Four-digit year | Yes | Année de naissance |
 | School level | Select | Yes | Classe / niveau |
 | School | Text | No | École (facultatif) |
 | Additional information | TextArea | No | Informations complémentaires (facultatif) |
 
-  \* Exactly one of date of birth or age.
+  Age is derived from the current calendar year minus the year of birth. Month and day are not
+  collected, so the displayed age is an estimate.
+  The field helper reads: *"Enter a four-digit year. Age is estimated from this year."* /
+  *"Saisissez l'année sur quatre chiffres. L'âge est estimé à partir de cette année."*
 
   The level select offers: *Primaire* (with levels P1–P6), *Secondaire* (1re–6e), *Autres / non
   précisé*.
@@ -283,10 +297,10 @@ review):
 - **Error state:** Inline field errors; if the save fails, a toast with the reason.
 - **Success state:** A toast: *"Child saved."* / *"Child updated."*
 - **Navigation destinations:** W-03.
-- **Required components:** `Sheet`, `Input`, `Select`, `TextArea`, `Button`, `DateField`.
+- **Required components:** `Sheet`, `Input`, `Select`, `TextArea`, `Button`.
 - **Accessibility:** The sheet is modal (focus trapped). Labels are always visible above the field.
-  The date picker exposes a native accessibility date control. Error text is associated with its
-  field.
+  The year field uses a numeric keyboard and limits entry to four digits. Error text is associated
+  with its field.
 - **Labels:**
 
 | English | Français |
@@ -295,8 +309,7 @@ review):
 | Edit the child | Modifier l'enfant |
 | First name | Prénom |
 | Last name | Nom (facultatif) |
-| Date of birth | Date de naissance |
-| Age | Âge |
+| Year of birth | Année de naissance |
 | School level | Classe / niveau |
 | School | École (facultatif) |
 | Additional information | Informations complémentaires (facultatif) |
@@ -311,8 +324,10 @@ review):
 
 - **Purpose:** Describe one or more learning needs for one child, and set the tutor preference.
 - **Target user:** Parent / guardian.
-- **Entry point:** W-03 → "Continue".
-- **Primary action:** "Continue" → Contact details (W-08).
+- **Entry point:** W-03 → "Continue" opens the first child's needs screen; continuing visits every
+  child in the W-03 order before Contact details.
+- **Primary action:** "Continue" → the next child's needs screen in the W-03 child order; after
+  the last child, continue to Contact details (W-08).
 - **Secondary actions:** "Add a need" → the need form sheet; edit or remove an existing need.
 - **Content:** The request-flow header (step 2 of 4); the child's name; the list of needs, each
   showing the subject, the level, the objective, the cadence and the session length; the
@@ -320,14 +335,16 @@ review):
   different tutor.
 - **Validation:** The "Continue" action requires ≥ 1 need. The tutor-preference control always has
   a value (default "no preference").
-- **Loading state:** A skeleton list.
+- **Loading state:** None; draft data is synchronously available from the local store.
 - **Empty state:** An empty state with an "Add a need" CTA and the sentence *"Describe what this
   child needs to work on."*
-- **Error state:** An `ErrorState` with a "Try again" action.
+- **Error state:** A missing or unknown child ID renders the standard not-found state and returns
+  to W-03; this local screen has no asynchronous operation to retry.
 - **Success state:** A toast: *"Need added."*
-- **Navigation destinations:** Need form sheet (W-06); Contact details (W-08); back to W-03.
-- **Required components:** `ListItem`, `Badge`, `Sheet`, `Button`, `EmptyState`, `SegmentedControl`,
-  `Stepper`.
+- **Navigation destinations:** Need form sheet (W-06); the next child's needs screen (W-05) or
+  Contact details (W-08) after the last child; back to W-03.
+- **Required components:** `NeedListItem`, `IconButton`, `Dialog`, `Sheet`, `Button`, `EmptyState`,
+  `SegmentedControl`, `Stepper`.
 - **Accessibility:** Each need row announces the subject and the cadence. The preference control is
   a radio group with an accessible description carrying the "not a guarantee" note.
 - **Labels:**
@@ -379,7 +396,8 @@ review):
 - **Navigation destinations:** W-05 or W-07.
 - **Required components:** `Sheet`, `Input`, `TextArea`, `Select`, `SegmentedControl`, `Button`.
 - **Accessibility:** The format control announces the selection; when the format changes, the
-  newly revealed field is announced. The subject suggestions are a horizontal chip list.
+  newly revealed field is announced. The subject suggestions are a horizontally scrollable chip
+  list.
 - **Labels:**
 
 | English | Français |
@@ -397,7 +415,8 @@ review):
 | Location | Localisation |
 | Additional notes | Remarques (facultatif) |
 | Save | Enregistrer |
-| Need saved. | Besoin enregistré. |
+| Need added. | Besoin ajouté. |
+| Need updated. | Besoin modifié. |
 
 ---
 
@@ -489,6 +508,8 @@ review):
   field; an information card explaining the PIN's purpose **and** that this is a demonstration:
   *"This prototype stores your code on your device only, in a hashed form. It is not real
   authentication."*
+- **Existing profile:** When the client chose to continue with a matching profile at W-08, show a
+  single PIN field to verify the existing code; do not replace the saved hash or salt.
 - **Validation:** 4 digits; the confirmation must match. A mismatch shows *"The codes do not
   match."* under the confirmation field.
 - **Loading state:** The "Continue" button shows a spinner while hashing and saving.
@@ -525,6 +546,9 @@ review):
 - **Secondary actions:** Per-section "Edit" links back to the relevant step.
 - **Content:** A summary in sections: *Children* (or *Learner*), *Needs*, *Contact details*,
   *Tutor preference*. Each section has an "Edit" action.
+- The child summary shows every saved child field, including year of birth and the age derived from
+  that year. Each learning-need summary shows every entered need field; optional contact and need
+  fields appear only when supplied.
 - **Validation:** The submission service refuses an incomplete request with a precise message
   ("Add at least one need before submitting").
 - **Loading state:** The primary button shows a spinner.
@@ -566,7 +590,8 @@ review):
 - **Validation:** None.
 - **Loading state:** None.
 - **Empty state:** n/a.
-- **Error state:** If the dashboard cannot be loaded, a "Try again" action.
+- **Error state:** If the submitted request cannot be found, show a not-found message and a
+  "Back to the dashboard" action. Dashboard loading errors are handled by W-12.
 - **Success state:** The screen itself is the success state.
 - **Navigation destinations:** W-12.
 - **Required components:** `Card`, `KeyValue`, `Button`.
@@ -929,7 +954,7 @@ review):
 
 - **Purpose:** Show the incoming requests and their state.
 - **Target user:** Administrator.
-- **Entry point:** The "Administration (simulation)" link on W-01.
+- **Entry point:** Direct admin route (`/admin`). The client Welcome screen does not link here.
 - **Primary action:** Tap a request → A-02.
 - **Secondary actions:** Filter by status; back to the client app.
 - **Content:** The simulation banner; a summary row (the number of requests by status); the request
@@ -1265,11 +1290,9 @@ review):
 
 | Sheet | Trigger | Content | Primary action | Dismissal |
 |---|---|---|---|---|
-| Request type | "Get Started" | Two options | Choose | Swipe / back |
+| Request type | "Get started" | Two options | Choose | Swipe / back |
 | Child form | "Add a child" | The child fields | Save | Swipe / back |
 | Need form | "Add a need" | The need fields | Save | Swipe / back |
-| Language | The FR/EN control (not used on Welcome: the control switches the copy directly) | A short list | Choose | Swipe / back |
-| Continue request | Welcome, when a draft exists | A summary + a choice | Continue | Swipe / back |
 | Rejection reason | "Decline" | An optional textarea | Confirm | Swipe / back |
 | Signature | "Sign the contract" | The typed name | Sign | Swipe / back |
 | Rejection reason (admin) | "Reject" | A required reason | Confirm | Swipe / back |
@@ -1348,8 +1371,7 @@ without replacing the underlying behaviour with a real integration.
 |---|---|---|
 | `validation.child.firstName` | First name is required | Le prénom est requis |
 | `validation.child.lastName` | Last name is too long | Le nom est trop long |
-| `validation.child.birthDate` | Enter a valid date of birth | Saisissez une date de naissance valide |
-| `validation.child.age` | The age must be between 3 and 25 | L'âge doit être compris entre 3 et 25 ans |
+| `validation.child.yearOfBirth` | Enter a year of birth for an age between 3 and 25 | Saisissez une année de naissance correspondant à un âge de 3 à 25 ans |
 | `validation.child.level` | The school level is required | Le niveau scolaire est requis |
 | `validation.child.school` | The school name is too long | Le nom de l'école est trop long |
 | `validation.need.subject` | Enter the subject or skill | Indiquez la matière ou la compétence |
@@ -1366,6 +1388,7 @@ without replacing the underlying behaviour with a real integration.
 | `validation.contact.email` | Enter a valid email address | Saisissez une adresse e-mail valide |
 | `validation.pin.format` | The code must be 4 digits | Le code doit contenir 4 chiffres |
 | `validation.pin.mismatch` | The codes do not match | Les codes ne correspondent pas |
+| `validation.pin.incorrect` | That code does not match this profile | Ce code ne correspond pas à ce profil |
 | `validation.payment.transactionId` | Enter a valid transaction ID | Saisissez un ID de transaction valide |
 | `validation.payment.payerPhone` | Enter a valid phone number | Saisissez un numéro de téléphone valide |
 | `validation.payment.amountMismatch` | The declared amount does not match the invoice amount | Le montant déclaré ne correspond pas au montant de la facture |

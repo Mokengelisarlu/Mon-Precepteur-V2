@@ -1,157 +1,61 @@
-import { ArrowRight, FileText, FlaskConical, GraduationCap, ShieldCheck } from 'lucide-react-native';
 import type React from 'react';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Alert, Badge, Button, SegmentedControl } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { useTranslation } from '@/hooks/use-translation';
-import { isLocale } from '@/lib/i18n';
-import { themeColor } from '@/lib/theme';
 
-import { WelcomeContinueSheet } from '../components/welcome-continue-sheet';
 import { WelcomeHero } from '../components/welcome-hero';
-import {
-  WelcomeReassuranceList,
-  type WelcomeReassurancePoint,
-} from '../components/welcome-reassurance-list';
-
-export type WelcomeRestorationState = 'idle' | 'restoring' | 'failed';
 
 export interface WelcomeScreenProps {
   readonly onGetStarted: () => void;
-  readonly onOpenAdmin: () => void;
-  readonly onContinueRequest?: () => void;
-  readonly hasDraft?: boolean;
-  readonly restorationState?: WelcomeRestorationState;
+  readonly onLogin: () => void;
 }
 
 export function WelcomeScreen({
   onGetStarted,
-  onOpenAdmin,
-  onContinueRequest,
-  hasDraft = false,
-  restorationState = 'idle',
+  onLogin,
 }: WelcomeScreenProps): React.JSX.Element {
-  const { t, locale, setLocale } = useTranslation();
-  const [isRestorationBannerVisible, setIsRestorationBannerVisible] = useState(
-    restorationState === 'failed',
-  );
-  const [isContinueSheetVisible, setIsContinueSheetVisible] = useState(false);
-
-  if (restorationState === 'restoring') {
-    return (
-      <View className="flex-1 items-center justify-center bg-surface" testID="welcome-restoring">
-        <ActivityIndicator
-          size="large"
-          color={themeColor('primary')}
-          accessibilityLabel={t('common.loading')}
-        />
-      </View>
-    );
-  }
-
-  const points: readonly WelcomeReassurancePoint[] = [
-    { icon: GraduationCap, label: t('welcome.point.tutor') },
-    { icon: FileText, label: t('welcome.point.contract') },
-    { icon: ShieldCheck, label: t('welcome.point.payment') },
-  ];
-
-  const languageOptions = [
-    { value: 'fr', label: t('welcome.language.fr') },
-    { value: 'en', label: t('welcome.language.en') },
-  ];
-
-  const handleLanguageChange = (value: string): void => {
-    if (isLocale(value)) {
-      setLocale(value);
-    }
-  };
-
-  const handleContinueRequest = (): void => {
-    setIsContinueSheetVisible(false);
-    onContinueRequest?.();
-  };
+  const { t } = useTranslation();
 
   return (
-    <View className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-surface" edges={['top', 'bottom']}>
       <ScrollView
-        contentContainerClassName="gap-xl px-xl pb-xxl"
+        contentContainerClassName="flex-grow justify-between gap-xl px-xl py-xl"
         showsVerticalScrollIndicator={false}
         testID="welcome-scroll"
       >
-        {isRestorationBannerVisible ? (
-          <Alert
-            variant="warning"
-            message={t('welcome.restorationFailed')}
-            dismissLabel={t('common.close')}
-            onDismiss={() => setIsRestorationBannerVisible(false)}
-            testID="welcome-restoration-banner"
-          />
-        ) : null}
-
-        <WelcomeHero appName={t('common.appName')} tagline={t('welcome.tagline')} />
-
-        <Text className="text-body-large text-on-surface-variant">{t('welcome.proposition')}</Text>
-
-        <Button
-          label={t('welcome.cta')}
-          onPress={onGetStarted}
-          size="lg"
-          fullWidth
-          leadingIcon={ArrowRight}
-          testID="welcome-get-started"
-        />
-
-        <WelcomeReassuranceList label={t('welcome.reassuranceLabel')} points={points} />
-
-        <View className="gap-s">
-          <Text className="text-label-large text-on-surface-variant">{t('welcome.language')}</Text>
-          <SegmentedControl
-            options={languageOptions}
-            value={locale}
-            onChange={handleLanguageChange}
-            accessibilityLabel={t('welcome.language')}
-            testID="welcome-language-switch"
-          />
+        <View className="flex-1 items-center justify-center gap-xl">
+          <WelcomeHero appName={t('common.appName')} />
+          <Text className="max-w-[420px] text-center text-body-large text-on-surface-variant">
+            {t('welcome.proposition')}
+          </Text>
         </View>
 
-        {hasDraft ? (
-          <Button
-            label={t('welcome.continueRequest')}
-            onPress={() => setIsContinueSheetVisible(true)}
-            variant="outlined"
-            fullWidth
-            testID="welcome-continue-request"
-          />
-        ) : null}
-
         <View className="gap-s">
-          <Alert
-            variant="info"
-            message={t('admin.simulation.banner')}
-            testID="admin-simulation-banner"
+          <Button
+            label={t('welcome.cta')}
+            onPress={onGetStarted}
+            size="lg"
+            fullWidth
+            testID="welcome-get-started"
           />
-          <Pressable
-            accessibilityRole="link"
-            onPress={onOpenAdmin}
-            className="min-h-[44px] flex-row items-center gap-s"
-            testID="admin-simulation-link"
+          <Button
+            label={t('welcome.login')}
+            onPress={onLogin}
+            variant="outlined"
+            size="lg"
+            fullWidth
+            testID="welcome-login"
+          />
+          <Text
+            className="pt-s text-center text-body-small text-on-surface-variant"
+            testID="welcome-powered-by"
           >
-            <Badge label={t('admin.simulation.badge')} variant="warning" icon={FlaskConical} />
-            <Text className="flex-1 text-label-large text-primary">{t('admin.simulation.title')}</Text>
-          </Pressable>
+            {t('welcome.poweredBy')}
+          </Text>
         </View>
       </ScrollView>
-
-      <WelcomeContinueSheet
-        visible={isContinueSheetVisible}
-        title={t('welcome.continueSheet.title')}
-        summary={t('welcome.continueSheet.summary')}
-        continueLabel={t('common.continue')}
-        cancelLabel={t('common.cancel')}
-        onClose={() => setIsContinueSheetVisible(false)}
-        onContinue={handleContinueRequest}
-      />
-    </View>
+    </SafeAreaView>
   );
 }

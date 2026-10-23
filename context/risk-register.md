@@ -20,7 +20,7 @@ postponed).
 
 | ID | Item | Type | Approval | Blocks | Status |
 |---|---|---|---|---|---|
-| R-01 | Request ownership and multiple requests per client | Decision | **Yes** | S07 | Proposed |
+| R-01 | Request ownership and multiple requests per client | Decision | **Yes** | — | **Accepted (2026-10-23)** |
 | R-02 | Learning needs are request-scoped, children are profile-scoped | Decision | **Yes** | S08 | Proposed |
 | R-03 | A proposal may cover several needs | Decision | **Yes** | S16 | Proposed |
 | R-04 | Partial payments and refunds are not supported | Decision | **Yes** | S19 | Proposed |
@@ -48,8 +48,13 @@ postponed).
 | R-26 | The admin route tree is a URL segment (`app/admin/`), not a group | Decision | **Yes** | — | Proposed |
 | R-27 | A dynamic param of the previous screen leaks into the URL after a replace | Risk | No | — | Accepted |
 | R-28 | The S04 placeholders render raw route paths, and the header titles were derived from `design.md` | Decision | No | S05+ | Accepted |
-| R-29 | The S05 Welcome seams (`hasDraft`, `restorationState`) and the reassurance group label | Decision | No | S13/S14 | Accepted |
+| R-29 | Historical S05 Welcome seams (`hasDraft`, `restorationState`) and reassurance group label | Decision | No | S13/S14 | Superseded by R-31 |
 | R-30 | NativeWind crashes in dev when a shadow utility is added to a `className` at runtime | Risk | No | — | Accepted (mitigated in S05) |
+| R-31 | Minimal Welcome entry, deferred PIN login, and removed Welcome shortcuts | Decision | No | S05/S14 | Accepted |
+| R-32 | Birth year is used to estimate a child's age | Decision | No | — | Accepted (updated after S07) |
+| R-33 | Learning-need frequency is stored as a selected cadence option | Decision | No | — | Accepted (S08) |
+| R-34 | Contact phone values use canonical `+243` storage | Assumption | No | — | Proposed (S10) |
+| R-35 | Existing client PINs are verified rather than replaced during request continuation | Decision | **Yes** | S11 | Accepted (2026-10-23) |
 
 ---
 
@@ -61,12 +66,12 @@ postponed).
   can a client have several requests at once?
 - **Impact:** Determines whether a client can be recognised on a second request, whether the
   dashboard shows one request or many, and how the PIN is attached.
-- **Proposed decision:** The `Client` profile is created at the contact step and identified by the
+- **Decision (2026-10-23, maintainer-approved):** The `Client` profile is created at the contact step and identified by the
   phone number (BR-01). A client may have **many requests over time**, and the dashboard lists
   them (BR-02). The PIN belongs to the profile, so the client keeps access across requests.
-- **Approval required:** Yes — it affects the dashboard and the contact step.
-- **Blocks implementation:** Yes, from S07 onward.
-- **Status:** Proposed.
+- **Approval required:** Yes — confirmed by the maintainer before S07 implementation.
+- **Blocks implementation:** No longer.
+- **Status:** Accepted.
 
 ### R-02 — Learning needs are request-scoped; children are profile-scoped
 
@@ -79,11 +84,13 @@ postponed).
   them across requests). `LearningNeed` is **request-scoped** (it is an analysed requirement *of a
   request*). Consequence: re-submitting a similar need re-enters it rather than copying it. The
   child's identity and school details are never re-typed.
+- **Decision (2026-10-23, maintainer-approved):** Confirmed as proposed. S08 collects request-scoped
+  needs in the request draft, keyed by child ID until submission.
 - **Alternative considered:** Needs as child-scoped — rejected because it breaks request-level
   pricing, contract scope and per-need assignment.
-- **Approval required:** Yes.
-- **Blocks implementation:** Yes, from S08.
-- **Status:** Proposed.
+- **Approval required:** Yes — confirmed by the maintainer before S08 implementation.
+- **Blocks implementation:** No longer.
+- **Status:** Accepted.
 
 ### R-03 — A proposal may cover several needs
 
@@ -222,12 +229,12 @@ postponed).
 
 ### R-12 — Privacy of children's information
 
-- **Description:** The app stores children's names, dates of birth, school levels, learning
+- **Description:** The app stores children's names, years of birth, school levels, learning
   objectives and notes on the device, and (in production) would send them to a server.
 - **Impact:** Children's data is sensitive. An insecure implementation, or a production system
   without a lawful basis, retention policy or parental consent flow, is a serious exposure.
 - **Proposed decision:** For the prototype: collect the **minimum** (first name, last name
-  optional, date of birth or age, level; school and notes optional) and store nothing beyond what
+  optional, year of birth, level; school and notes optional) and store nothing beyond what
   the brief requires. For production: a consent flow for the parent/guardian, a defined retention
   period, encryption at rest, an audit trail, and the child's right to erasure — all requiring legal
   review in the DRC.
@@ -491,26 +498,18 @@ postponed).
 
 ---
 
-### R-29 — The S05 Welcome seams and the copy `design.md` did not specify
+### R-29 — Historical S05 Welcome seams and copy
 
-- **Description:** S05 delivers the first real screen, and three points were not covered by
-  `design.md` W-01: (a) the draft check — the "continue your request" entry, the restoring spinner
-  and the restoration banner depend on a persisted draft, but `useRequestDraftStore` arrives in S14
-  and the persistence layer in S13; (b) the reassurance points must be "grouped as a list with a
-  label" (W-01, accessibility), and the label table of W-01 contained no label for that group;
-  (c) W-01 requires the CTA to be the first focusable element while its content list places the
-  reassurance points before the language switch.
-- **Impact:** until S13/S14, the "continue" entry and the restoring state cannot be reached in the
-  running app; one extra key per language is needed for the group label.
-- **Decision (S05):** the screen receives `hasDraft` and `restorationState` as props (both default
-  to "no draft" / "idle"), so the screen stays pure and testable and the store is created once, in
-  S14, with the right shape. The group label was added to both dictionaries and to the W-01 label
-  table. The layout order (lock-up → proposition → **CTA** → reassurance points → language switch →
-  secondary actions) was recorded in `design.md` W-01; it satisfies the accessibility requirement
-  and keeps the CTA above the fold at 360×640 dp.
+- **Description:** This decision documented the original S05 Welcome design, including draft-state
+  seams and a reassurance group. Those elements were removed by the approved Welcome revision;
+  this entry is retained as historical context and no longer describes W-01.
+- **Original decision:** `hasDraft` and `restorationState` were props pending the S13/S14 stores;
+  the reassurance group received a label and the original Welcome layout order was documented.
+- **Current behavior:** See R-31 and `design.md` W-01. Draft restoration remains a future behavior,
+  but the Welcome screen does not render draft-specific content.
 - **Approval required:** No — reversible; the seams disappear when the stores exist.
 - **Blocks implementation:** No.
-- **Status:** Accepted.
+- **Status:** Superseded by R-31.
 
 ---
 
@@ -544,13 +543,72 @@ postponed).
 
 ---
 
+### R-31 — Minimal Welcome entry and deferred local login
+
+- **Description:** The approved Welcome redesign removes the reassurance points, language switch,
+  admin entry, restoration notice and separate draft-resume prompt. The Login button must not imply
+  that authentication exists before the client profile, PIN and persistence flows are implemented.
+- **Decision:** Welcome contains only the logo, app name, one explanatory paragraph, the two large
+  actions, and the company credit. "Get started" resumes an existing persisted draft when available;
+  otherwise it opens request-type selection. "Login" opens a translated availability notice, not a
+  credential form, until the relevant account and persistence steps are complete. Admin and language
+  controls remain on their later documented surfaces; they are not shown on Welcome.
+- **Approval:** Approved by the maintainer for this S05 revision.
+- **Status:** Accepted.
+
+### R-32 — Birth-year precision for child age
+
+- **Description:** Collecting only a birth year cannot determine a birthday-precise age.
+- **Decision:** Per the maintainer's requested child-form change, collect one required four-digit
+  year of birth and derive the displayed age as current calendar year minus birth year. The derived
+  age must be between 3 and 25. Do not collect a date of birth or a separately entered age.
+- **Approval required:** No — this updates the child form as explicitly requested and adds no
+  dependency.
+- **Status:** Accepted; supersedes the completed S07 date-of-birth / age input decision.
+
+### R-33 — Learning-need cadence representation
+
+- **Description:** `context/architecture.md` proposed a structured `{ perWeek, label }` value, but
+  the approved design offers discrete cadence choices including monthly and Flexible, which do not
+  all map truthfully to a weekly number.
+- **Decision (S08, maintainer-approved):** Store the selected cadence as a stable string option.
+  Keep the available options defined by the need form and localize their labels. This preserves the
+  user's selected cadence without inventing a numeric conversion.
+- **Approval required:** Yes — confirmed by the maintainer before S08 implementation.
+- **Blocks implementation:** No longer.
+- **Status:** Accepted.
+
+### R-34 — Canonical contact phone representation
+
+- **Description:** The contact rules require phone normalization but do not specify the exact
+  normalized storage representation.
+- **Assumption used in S10:** Store accepted `+243…`, `0…` and local `8…` inputs in canonical
+  `+243…` form. Equivalent representations then match the same client profile.
+- **Impact:** The stored phone value is always international-format DRC, without the local trunk
+  prefix.
+- **Approval required:** No for the in-memory prototype. Confirm or revise before profiles are
+  persisted in S14.
+- **Status:** Proposed.
+
+### R-35 — Existing profile PIN during request continuation
+
+- **Description:** S10 allows a client with a matching phone number to continue with the existing
+  profile. S11 must not silently replace the PIN already attached to that profile.
+- **Decision (maintainer-approved for S11):** Ask the returning client to enter and locally verify
+  the existing PIN. On success, continue the request without changing the profile credentials.
+- **Impact:** Existing-profile continuation verifies a PIN; it does not provide a PIN reset or a
+  replacement path.
+- **Status:** Accepted.
+
+---
+
 
 These are the items marked "Approval required: Yes" that are **not yet confirmed**. Each is
 small enough to answer in one line.
 
 | # | Question | Recommended answer | Blocks |
 |---|---|---|---|
-| Q1 | Is a client profile created at the contact step and identified by phone, with many requests allowed? | Yes (R-01) | S07 |
+| Q1 | Is a client profile created at the contact step and identified by phone, with many requests allowed? | Yes (R-01) — **confirmed 2026-10-23** | — |
 | Q2 | Are children reusable across requests while needs are per-request? | Yes (R-02) | S08 |
 | Q3 | May a proposal cover several needs with one tutor? | Yes (R-03) | S16 |
 | Q4 | Are partial payments and refunds excluded from the prototype? | Yes (R-04) | S19 |

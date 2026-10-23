@@ -18,6 +18,7 @@ export interface SelectProps {
   value?: string;
   options: readonly SelectOption[];
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   helperText?: string;
   errorText?: string;
@@ -25,6 +26,7 @@ export interface SelectProps {
   disabled?: boolean;
   sheetTitle?: string;
   cancelLabel: string;
+  triggerRef?: React.Ref<React.ElementRef<typeof Pressable>>;
   accessibilityLabel?: string;
   className?: string;
   testID?: string;
@@ -35,6 +37,7 @@ export function Select({
   value,
   options,
   onChange,
+  onBlur,
   placeholder,
   helperText,
   errorText,
@@ -42,6 +45,7 @@ export function Select({
   disabled = false,
   sheetTitle,
   cancelLabel,
+  triggerRef,
   accessibilityLabel,
   className,
   testID,
@@ -66,12 +70,14 @@ export function Select({
         </Text>
       ) : null}
       <Pressable
+        ref={triggerRef}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
         accessibilityHint={supportText}
         accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
         onPress={() => setOpen(true)}
+        onBlur={onBlur}
         className={[
           'min-h-[52px] flex-row items-center justify-between gap-s rounded-field border px-l',
           hasError ? 'border-error bg-surface' : 'border-outline bg-surface',
@@ -99,9 +105,11 @@ export function Select({
       ) : null}
       <Sheet
         visible={open}
+        presentation="modal"
         onClose={() => setOpen(false)}
         title={sheetTitle ?? label}
         accessibilityLabel={sheetTitle ?? label}
+        dismissLabel={cancelLabel}
         testID={testID === undefined ? undefined : `${testID}-sheet`}
         footer={
           <Button label={cancelLabel} variant="tonal" onPress={() => setOpen(false)} />
@@ -122,7 +130,9 @@ export function Select({
                 <View className="flex-1">
                   <Text className="text-body-large text-on-surface">{option.label}</Text>
                   {option.description !== undefined ? (
-                    <Text className="text-body-small text-on-surface-variant">{option.description}</Text>
+                    <Text className="text-body-small text-on-surface-variant">
+                      {option.description}
+                    </Text>
                   ) : null}
                 </View>
                 {isSelected ? <Icon icon={Check} size={20} color="primary" /> : null}

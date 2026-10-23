@@ -113,9 +113,11 @@ export function MultiSelect({
       ) : null}
       <Sheet
         visible={open}
+        presentation="modal"
         onClose={() => setOpen(false)}
         title={sheetTitle ?? label}
         accessibilityLabel={sheetTitle ?? label}
+        dismissLabel={cancelLabel}
         testID={testID === undefined ? undefined : `${testID}-sheet`}
         footer={
           <View className="flex-row gap-s">

@@ -14,4 +14,8 @@ class BottomSheet extends OfficialBottomSheet {
   }
 }
 
-module.exports = { ...officialMock, __esModule: true, default: BottomSheet };
+module.exports = {
+  ...officialMock,
+  __esModule: true,
+  default: BottomSheet,
+};

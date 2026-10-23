@@ -10,7 +10,7 @@ export default function WelcomeRoute(): React.JSX.Element {
   return (
     <WelcomeScreen
       onGetStarted={() => router.push(routes.requestType)}
-      onOpenAdmin={() => router.push(routes.adminRoot)}
+      onLogin={() => router.push(routes.login)}
     />
   );
 }

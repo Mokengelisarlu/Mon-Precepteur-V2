@@ -1,6 +1,9 @@
 import type React from 'react';
 import { useState } from 'react';
-import type { NativeSyntheticEvent, TextInputContentSizeChangeEventData } from 'react-native';
+import type {
+  NativeSyntheticEvent,
+  TextInputContentSizeChangeEventData,
+} from 'react-native';
 import { Text, TextInput, View } from 'react-native';
 
 import { themeColor } from '@/lib/theme';
@@ -9,12 +12,14 @@ export interface TextAreaProps {
   label?: string;
   value: string;
   onChangeText: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   helperText?: string;
   errorText?: string;
   required?: boolean;
   disabled?: boolean;
   maxLength?: number;
+  inputRef?: React.Ref<TextInput>;
   minHeight?: number;
   maxHeight?: number;
   accessibilityLabel?: string;
@@ -26,12 +31,14 @@ export function TextArea({
   label,
   value,
   onChangeText,
+  onBlur,
   placeholder,
   helperText,
   errorText,
   required = false,
   disabled = false,
   maxLength,
+  inputRef,
   minHeight = 120,
   maxHeight = 240,
   accessibilityLabel,
@@ -58,11 +65,13 @@ export function TextArea({
         </Text>
       ) : null}
       <TextInput
+        ref={inputRef}
         accessibilityLabel={accessibilityLabel ?? label}
         accessibilityHint={supportText}
         accessibilityState={{ disabled }}
         value={value}
         onChangeText={onChangeText}
+        onBlur={onBlur}
         onContentSizeChange={handleContentSizeChange}
         placeholder={placeholder}
         placeholderTextColor={themeColor('outline')}

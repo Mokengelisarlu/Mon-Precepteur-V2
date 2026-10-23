@@ -193,6 +193,7 @@ app/
 ├── (client)/
 │   ├── _layout.tsx                   # Client Stack (shared header options)
 │   ├── welcome.tsx                   # 1. Welcome
+│   ├── login.tsx                     # Prototype login availability notice
 │   ├── request-type.tsx              # 2. Request type (bottom sheet)
 │   ├── children/
 │   │   ├── index.tsx                 # 3A. Child list
@@ -270,13 +271,17 @@ The client declares the payment **for an invoice**, so `/payment/…` carries th
   is visually dominant.
 - **Back behaviour**: system back and the header back button behave identically. The bottom sheet
   dismisses on swipe-down and on back.
+- **Welcome actions:** "Get started" resumes a restored draft when one exists, otherwise it opens
+  request-type selection; "Login" opens the explicitly unavailable prototype notice until local
+  account sign-in is implemented.
 - **Deep-linking to a nonexistent entity** renders a dedicated "not found" state with a route back
   to the dashboard — never a crash and never a blank screen.
-- **The admin simulation is reachable from the Welcome screen** through a clearly labelled
-  "Administration (simulation)" entry. It is a visible, explicit prototype affordance — not a hidden
-  gesture.
+- The admin simulation is reachable from the client dashboard through a clearly labelled
+  "Administration (simulation)" entry. The Welcome screen has no admin entry.
 - **No modal route blocks the stack**: bottom sheets and dialogs are used for secondary choices,
   and are implemented as components (not routes) so the native back gesture is never trapped.
+- Selector sheets use React Native `Modal` presentation so they render above an already-open form
+  sheet; regular form sheets continue to use `@gorhom/bottom-sheet`.
 - **Every screen has a translated header title.** The title comes from the `nav.*` keys of the
   dictionaries and is set by the stack layout, never from the route file name. The Welcome and
   Submitted screens have no header. The admin stack uses the `surface-highest` background and the
@@ -315,7 +320,8 @@ real role model is a backend concern (see §10).
 | Store | Responsibility | Persisted |
 |---|---|---|
 | `useSessionStore` | Current client session (clientId, phone, unlocked), locale override | Yes |
-| `useRequestDraftStore` | The request currently being built (children, needs, contact, pin step) | Yes — it is the "resume where you left off" draft |
+| `useClientStore` | Complete client profiles, including lookup by their normalized phone | Yes — profiles are currently kept in memory; persisted from S14 |
+| `useRequestDraftStore` | The request currently being built (journey type, client ID and contact details, child drafts, child-keyed needs, adult self needs, PIN step) | Yes — persisted with the full draft from S14; all draft fields are currently kept in memory |
 | `useRequestStore` | Submitted requests + their derived status | Yes |
 | `useDomainStore` | Proposals, contracts, invoices, payments, receipts, assignments, tutors | Yes |
 | `useNotificationStore` | Notifications + unread count | Yes |
@@ -424,9 +430,9 @@ data can never be misread as V1 data.
 ### 6.4 The draft store and restoration
 
 The request draft is persisted as the user progresses so that closing the app mid-request does not
-lose work. On app start the app restores the draft and offers "Continue your request" on the
-Welcome screen (a bottom sheet). On submission the draft is cleared and the request moves to
-`useRequestStore`.
+lose work. On app start the app restores the draft. Pressing "Get started" resumes that draft when
+one exists; otherwise it opens request-type selection. On submission the draft is cleared and the
+request moves to `useRequestStore`.
 
 ---
 
@@ -485,7 +491,7 @@ Reusable client profile. Owned by the account, not by a single request.
 | `id` | `string` | R | `cli_<uuid>` |
 | `firstName` | `string` | R | Trimmed, 1–60 |
 | `lastName` | `string` | R | Trimmed, 1–60 |
-| `phone` | `string` | R | Primary identifier. Normalised to `+243…` / local `0…` form. Unique. |
+| `phone` | `string` | R | Primary identifier. Stored in canonical `+243…` form; accepted local `0…` and `8…` forms are normalised before storage. Unique. |
 | `email` | `string` | O | RFC-lite validation, unique if present |
 | `address` | `string` | O | Neighbourhood / locality (≤ 120) |
 | `pinHash` | `string` | R | Salted SHA-256 hex. **Never the plain PIN.** |
@@ -506,8 +512,7 @@ Profile-level, reusable across the client's requests.
 | `clientId` | `string` | R | Owner |
 | `firstName` | `string` | R | Trimmed, 1–60 |
 | `lastName` | `string` | O | Trimmed, 1–60 (prompt allows "last name, if required") |
-| `birthDate` | `string` | O | ISO `YYYY-MM-DD` — preferred over age (age goes stale) |
-| `age` | `number` | O | Derived fallback when `birthDate` is absent. 3–25 |
+| `yearOfBirth` | `number` | R | Four-digit birth year; displayed age is derived from the current calendar year (3–25) |
 | `level` | `string` | R | Educational level, free-form + suggestions (e.g. "6e", "Primaire 3") |
 | `school` | `string` | O | Optional; the V1 prototype required it, V2 makes it optional to reduce friction |
 | `notes` | `string` | O | ≤ 500 |
@@ -559,8 +564,9 @@ The central business entity.
 | `notes` | `string` | O | ≤ 500 |
 | `createdAt` / `updatedAt` | `number` | R | Epoch ms |
 
-`frequency` is stored as a structured pair `{ perWeek: number, label: string }` so the administrator
-can filter needs by cadence, while still displaying the label.
+`frequency` stores the selected cadence option as a stable string value. The design options include
+weekly, monthly and Flexible cadences, so they are not all representable as a truthful `perWeek`
+number (R-33). Labels are localized at presentation time.
 
 Invariants: exactly one of `childId` set / `learnerIsClient === true`. Enforced by Zod refinement.
 
@@ -744,6 +750,11 @@ notifications in the new language.
 | `service_started` | Assignment became active | Client |
 
 ### 7.4 Ownership analysis — request-scoped vs profile-scoped
+
+The maintainer confirmed **R-01 on 2026-10-23**: a client profile is created at the contact step,
+identified by the phone number, and may own multiple requests. Child details entered before that
+profile exists are temporary `ChildDraft` values in `useRequestDraftStore`; they are not standalone
+profile records until the later profile/submission integration step.
 
 | Entity | Scope | Reasoning |
 |---|---|---|

@@ -348,13 +348,13 @@ All rules below are implemented as Zod schemas in `src/features/<domain>/types.t
 |---|---|---|---|
 | `firstName` | Yes | Trimmed, 1–60 characters, at least one letter | `validation.child.firstName` |
 | `lastName` | No | Trimmed, 1–60 characters | `validation.child.lastName` |
-| `birthDate` | Conditional | ISO date, not in the future, age between 3 and 25 | `validation.child.birthDate` |
-| `age` | Conditional | Integer 3–25 — used only when `birthDate` is absent | `validation.child.age` |
+| `yearOfBirth` | Yes | Four-digit year; derived age (current calendar year minus birth year) must be 3–25 | `validation.child.yearOfBirth` |
 | `level` | Yes | Trimmed, 1–60 | `validation.child.level` |
 | `school` | No | Trimmed, ≤ 80 | `validation.child.school` |
 | `notes` | No | ≤ 500 | `validation.child.notes` |
 
-Exactly one of `birthDate` / `age` must be provided.
+Age is derived from the year of birth and the current calendar year. Month and day are not
+collected, so this is an estimate rather than birthday-precise age.
 
 ### 11.2 Learning-need form
 
@@ -363,7 +363,7 @@ Exactly one of `birthDate` / `age` must be provided.
 | `subject` | Yes | Trimmed, 2–80 | `validation.need.subject` |
 | `level` | Yes | Trimmed, 1–60 | `validation.need.level` |
 | `objective` | Yes | Trimmed, 5–400 | `validation.need.objective` |
-| `frequency` | Yes | One of the allowed cadence options | `validation.need.frequency` |
+| `frequency` | Yes | One of `weekly_1`, `weekly_2`, `weekly_3`, `monthly_1`, `flexible` | `validation.need.frequency` |
 | `sessionMinutes` | Yes | One of 30 / 45 / 60 / 90 / 120 | `validation.need.sessionMinutes` |
 | `availability` | Yes | Trimmed, 5–300 | `validation.need.availability` |
 | `format` | Yes | `home` \| `online` \| `center` | `validation.need.format` |

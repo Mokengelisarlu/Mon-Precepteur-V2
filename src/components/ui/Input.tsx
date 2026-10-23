@@ -10,6 +10,7 @@ export interface InputProps {
   label?: string;
   value: string;
   onChangeText: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   helperText?: string;
   errorText?: string;
@@ -24,6 +25,7 @@ export interface InputProps {
   trailingIconLabel?: string;
   onTrailingIconPress?: () => void;
   maxLength?: number;
+  inputRef?: React.Ref<TextInput>;
   accessibilityLabel?: string;
   className?: string;
   testID?: string;
@@ -33,6 +35,7 @@ export function Input({
   label,
   value,
   onChangeText,
+  onBlur,
   placeholder,
   helperText,
   errorText,
@@ -47,6 +50,7 @@ export function Input({
   trailingIconLabel,
   onTrailingIconPress,
   maxLength,
+  inputRef,
   accessibilityLabel,
   className,
   testID,
@@ -71,11 +75,13 @@ export function Input({
       >
         {leadingIcon ? <Icon icon={leadingIcon} size={20} color="on-surface-variant" /> : null}
         <TextInput
+          ref={inputRef}
           accessibilityLabel={accessibilityLabel ?? label}
           accessibilityHint={supportText}
           accessibilityState={{ disabled }}
           value={value}
           onChangeText={onChangeText}
+          onBlur={onBlur}
           placeholder={placeholder}
           placeholderTextColor={themeColor('outline')}
           keyboardType={keyboardType}

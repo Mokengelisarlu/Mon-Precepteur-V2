@@ -5,7 +5,6 @@ import logoSource from '../../../../assets/mon-precepteur-logo.png';
 
 export interface WelcomeHeroProps {
   readonly appName: string;
-  readonly tagline: string;
 }
 
 const styles = StyleSheet.create({
@@ -15,7 +14,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function WelcomeHero({ appName, tagline }: WelcomeHeroProps): React.JSX.Element {
+export function WelcomeHero({ appName }: WelcomeHeroProps): React.JSX.Element {
   return (
     <View className="items-center gap-xs" testID="welcome-hero">
       <Image
@@ -25,13 +24,12 @@ export function WelcomeHero({ appName, tagline }: WelcomeHeroProps): React.JSX.E
         accessible={false}
         testID="welcome-logo"
       />
-      <Text className="text-title-medium text-on-surface-variant">{appName}</Text>
       <Text
         accessibilityRole="header"
-        className="text-center text-headline-small text-on-surface"
-        testID="welcome-tagline"
+        className="text-center text-title-medium text-on-surface-variant"
+        testID="welcome-app-name"
       >
-        {tagline}
+        {appName}
       </Text>
     </View>
   );

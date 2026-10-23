@@ -6,6 +6,7 @@ export interface PinInputProps {
   length?: number;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   onComplete?: (value: string) => void;
   label?: string;
   helperText?: string;
@@ -13,6 +14,7 @@ export interface PinInputProps {
   disabled?: boolean;
   secure?: boolean;
   accessibilityLabel?: string;
+  inputRef?: React.Ref<TextInput>;
   className?: string;
   testID?: string;
 }
@@ -32,6 +34,7 @@ export function PinInput({
   length = 4,
   value,
   onChange,
+  onBlur,
   onComplete,
   label,
   helperText,
@@ -39,6 +42,7 @@ export function PinInput({
   disabled = false,
   secure = false,
   accessibilityLabel,
+  inputRef: forwardedInputRef,
   className,
   testID,
 }: PinInputProps): React.JSX.Element {
@@ -77,13 +81,14 @@ export function PinInput({
           </View>
         ))}
         <TextInput
-          ref={inputRef}
+          ref={forwardedInputRef ?? inputRef}
           accessibilityLabel={accessibilityLabel ?? label}
           accessibilityHint={supportText}
           accessibilityState={{ disabled }}
           style={styles.overlay}
           value={value}
           onChangeText={handleChangeText}
+          onBlur={onBlur}
           editable={!disabled}
           keyboardType="number-pad"
           secureTextEntry={secure}

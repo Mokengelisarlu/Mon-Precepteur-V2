@@ -42,6 +42,7 @@ npm test            # jest
 | Different tutors for different needs | T-A04 | Automated |
 | Form validation | T-A05 | Automated |
 | Incomplete requests | T-A06 | Automated |
+| Request submission and confirmation | T-A24 | Automated |
 | PIN confirmation errors | T-A07 | Automated |
 | App restart and local data restoration | T-A08 | Automated + Manual |
 | Proposal acceptance and rejection | T-A09 | Automated |
@@ -70,11 +71,13 @@ need, a client profile with a hashed PIN, an `ActivityEvent` and a `request_rece
 
 **T-A02 — Multiple children in one request**
 *When* two children are added and each has one need, *then* the request references both children
-and both needs, and each child's need list contains only its own need.
+and both needs, each child's need list contains only its own need, and Continue visits the needs
+screens in child-list order before Contact.
 
 **T-A03 — Multiple needs for one child**
 *When* two needs are added for the same child, *then* both exist, are independently editable, and
-either can be removed without affecting the other.
+either can be removed without affecting the other; needs recorded for a different child remain
+isolated.
 
 **T-A04 — Different tutors for different needs**
 *When* two needs of the same child are assigned to two different tutors, *then* the two
@@ -82,18 +85,29 @@ assignments coexist, the client sees two different tutors, and neither assignmen
 
 **T-A05 — Form validation**
 *Then* every Zod schema rejects each invalid case with the expected key:
-`firstName` empty; `age` out of range; `birthDate` in the future; both `age` and `birthDate`
-absent; `objective` shorter than 5 characters; `location` missing when `format` is `home`; phone
-not a valid number; email malformed; PIN not 4 digits; PIN confirmation mismatched; transaction ID
-with illegal characters; `paidAt` in the future; `paidAt` older than 90 days.
+`firstName` empty; `yearOfBirth` not a four-digit year or derives an age outside 3–25; a need
+objective shorter than 5 characters; `location` missing when `format` is `home` or
+`center`; unsupported need frequency, session length or format; phone
+not a valid DRC number; accepted `+243`, `0` and local `8` forms normalize to the same canonical
+phone; duplicate normalized phones offer the existing profile without creating another; email
+malformed; PIN not 4 digits; PIN confirmation mismatched; transaction ID with illegal characters;
+`paidAt` in the future; `paidAt` older than 90 days.
 
 **T-A06 — Incomplete request cannot be submitted**
 *When* a request has no need, or no valid contact, or no PIN, *then* submission is rejected with a
 `VALIDATION_FAILED` error and **no** request, event or notification is created.
 
+**T-A24 — Request submission and confirmation**
+*When* a complete parent or adult draft is submitted, *then* the request is stored with status
+`received`, its needs reference that request, the first client `ActivityEvent` and
+`request_received` notification are stored, and the draft is cleared; *and* the confirmation shows
+the generated reference. The reference uses `MP-YYYY-NNNN` and increments within its year.
+
 **T-A07 — PIN confirmation error**
 *When* the PIN and the confirmation differ, *then* the confirmation field shows the mismatch error
-and the flow does not advance; *and* the persisted state contains no plain-text PIN anywhere.
+and the flow does not advance; after correcting the confirmation, one press of Continue advances;
+*and* the persisted state contains no plain-text PIN anywhere. When continuing with an existing
+client profile, an incorrect PIN is rejected and the saved PIN hash and salt remain unchanged.
 
 **T-A08 — App restart and local data restoration**
 *When* the app is killed and relaunched, *then* the client, the children, the request, its needs,
@@ -104,6 +118,12 @@ is restored and the "continue your request" sheet appears.
 **T-A10 — Adult request completes successfully**
 *When* the adult journey completes, *then* the request has `type: 'self'`, no children, and at
 least one need with `learnerIsClient: true`; *and* no `Child` record is created at any point.
+
+**T-A24 — Request-type sheet selection**
+*When* "Get started" is pressed, *then* the request-type sheet opens; selecting "For my child"
+navigates to `/children` and stores `journeyType: 'child'`, while selecting "For myself" navigates
+to `/needs/self` and stores `journeyType: 'self'`; *and* returning to Welcome and opening the sheet
+again retains the in-memory selection; *and* back/Escape dismissal returns to Welcome.
 
 ### 3.2 Proposals, contracts and invoices
 
@@ -156,8 +176,9 @@ does not support the need's subject or format, cannot be assigned; the request r
 
 **T-A18 — Navigation and back behaviour**
 *Then* the back gesture and the header back button produce the same result; *and* an unknown
-dynamic id renders the not-found state rather than throwing; *and* the admin simulation is
-reachable and labelled.
+dynamic id renders the not-found state rather than throwing; *and* Login from Welcome opens the
+explicit unavailable notice and returns home; *and* the admin simulation remains labelled on its
+workspace.
 
 **T-A19 — English and French content**
 *Then* the FR dictionary contains every EN key with a non-empty value; *and* no user-facing string
@@ -192,12 +213,13 @@ parsed.
 | T-M02 | Parent journey | Walk through the whole parent flow with 2 children and 3 needs | Every step is understandable without external help |
 | T-M03 | Navigation and back | Explore every route; press back everywhere | No trapped flow, no unexpected screen, no double-tap duplication |
 | T-M04 | Bilingual review | Switch FR ↔ EN on every screen | All visible copy changes; no truncation; no mixed-language screen |
-| T-M05 | Small screens | Run at 360×640 dp (and 320×568 if it renders) | No clipped text, no unreachable primary action, no overlapping elements |
+| T-M05 | Small screens | Run at 360×640 dp (and 320×568 if it renders) | Welcome and Login text fit or scroll; both Welcome actions remain reachable; the request-type sheet title and both choices fit and remain tappable; no overlap |
 | T-M06 | State review | Trigger every empty / loading / error / success state | Each state is intentional and explained, never a blank screen |
 | T-M07 | Real device restart | Kill and relaunch on a physical device | Everything is restored; the "continue your request" sheet appears |
 | T-M08 | Honesty review | Read every screen as a client | Every simulation is labelled: PIN, signature, payment verification, admin mode, notifications. No screen implies a real SMS, a real payment, or a legally valid signature. |
 | T-M09 | Visual review | Compare each screen against `design.md` | Layout, hierarchy and copy match the specification |
 | T-M10 | Accessibility pass | With TalkBack/VoiceOver and the font scale at 130 % | All controls are reachable and labelled; no content is clipped |
+| T-M11 | Request-type sheet dismissal | Open the sheet; swipe it down and press system back / Escape | Each dismissal closes the sheet without navigating away from Welcome |
 
 ---
 

@@ -231,47 +231,55 @@ admin screens that consume it.
 
 ## Phase 2 — The Client Request Journey
 
-### [x] S05 — Welcome screen
+### [x] S05 — Welcome and entry screen revision
 
-- **Objective:** Deliver the first screen the client sees, per `design.md` §"Welcome".
-- **Scope:** `app/(client)/welcome.tsx` and the screen it renders.
+- **Objective:** Revise the Welcome screen to the maintainer-approved minimal layout and add a
+  truthful Login availability screen, per `design.md` W-01 and W-20.
+- **Scope:** Welcome and Login route/screen, typed navigation, and their EN/FR copy. The Login
+  screen does not authenticate; real local PIN login waits for the client profile and persistence
+  roadmap steps.
 - **Prerequisites:** S02, S03, S04.
 - **Tasks:**
-  1. Implement the Welcome screen per `design.md`: brand hero, a short value proposition, the
-     primary CTA "Get Started" (FR: « Commencer »), the language switch, and the
-     "Administration (simulation)" entry.
-  2. Implement the "continue your request" bottom sheet, shown only when a persisted draft
-     exists (the check is a no-op until S14 introduces persistence).
-  3. Add the welcome copy to both dictionaries.
-- **Expected files:** `app/(client)/welcome.tsx`, `src/features/request/screens/welcome-screen.tsx`,
-  `src/features/request/components/welcome-hero.tsx`, dictionary updates.
-- **Data & state:** Reads the draft store's existence flag.
+  1. Keep the logo and app name, remove the tagline and all Welcome content not in W-01.
+  2. Show the service description, two large actions at the bottom ("Get started" and "Login"),
+     and the "Powered by Mokengeli Sarlu" credit.
+  3. Route "Get started" to request-type selection, or resume an existing draft when restoration
+     is available; do not show a separate continue prompt.
+  4. Route "Login" to a bilingual screen that explains login is unavailable in this local
+     prototype and returns the user to Welcome. Do not present PIN fields or claim authentication.
+  5. Remove the Welcome language switch and admin entry; those remain available from their
+     documented later surfaces.
+  6. Add all new/changed copy to both dictionaries.
+- **Expected files:** `app/(client)/welcome.tsx`, `app/(client)/login.tsx`,
+  `app/(client)/_layout.tsx`, `src/features/request/screens/welcome-screen.tsx`,
+  `src/features/request/components/welcome-hero.tsx`,
+  `src/features/client/screens/login-unavailable-screen.tsx`,
+  `src/lib/navigation/routes.ts`, both dictionaries, and the directly related tests.
+- **Data & state:** The Welcome route will use the draft store when S14 supplies it. Until then,
+  it opens request-type selection. Login remains unavailable until the profile, PIN and persistence
+  flows are implemented.
 - **Acceptance criteria:**
-  - [x] The screen renders in both FR and EN with no hardcoded string.
-  - [x] The primary CTA is the single dominant action.
-  - [x] The language switch changes all visible copy immediately, with no restart.
-  - [x] The admin simulation entry is visible and labelled.
-  - [x] The screen is usable at 360×640 dp.
-- **Tests:** A render test (FR and EN), a test that the language switch changes the CTA label.
-- **Definition of done:** The Welcome screen matches `design.md` and is fully localised.
+  - [x] Welcome shows only the logo, app name, description, two large buttons, and credit.
+  - [x] Both buttons work: Get started opens the request flow (or resumes a restored draft);
+        Login opens the unavailable notice screen.
+  - [x] The Login screen clearly states that sign-in is not available and offers a route home.
+  - [x] All visible copy is localised in FR and EN; no auth is implied.
+  - [x] The layout is usable at 360×640 dp and the actions remain reachable with large text.
+- **Tests:** Welcome render tests in FR and EN; content-exclusion and action tests; Login screen
+  copy/navigation tests; route-tree and navigation regression tests.
+- **Definition of done:** The approved Welcome content and honest Login entry are implemented,
+  localised and verified.
 - **Depends on:** S02, S03, S04.
-- **Completed:** S05 — 120 tests pass, `typecheck`/`lint` clean, `expo export` (android) succeeds.
-  **Delivered:** `app/(client)/welcome.tsx` (thin composition), the `WelcomeScreen`
-  (`src/features/request/screens/welcome-screen.tsx`) and the three domain components
-  (`welcome-hero.tsx` with the `assets/mon-precepteur-logo.png` lock-up,
-  `welcome-reassurance-list.tsx`, `welcome-continue-sheet.tsx`), the `welcome.*` and
-  `admin.simulation.badge` copy in both dictionaries, and `expo-env.d.ts` (the `*.png` module
-  declaration). The "continue your request" entry and the restoring spinner are driven by the
-  `hasDraft` / `restorationState` props, which keep their defaults until S13/S14 (R-29). The
-  layout order and the reassurance group label are recorded in `design.md` W-01; R-14 (logo) is
-  closed. **Device fix (R-30):** switching the language crashed the app in development because
-  NativeWind compiles `shadow-elevation-*` into a CSS variable and re-serialises the component
-  props when such a class appears at runtime; the `SegmentedControl` and the `Card` now always
-  resolve a shadow class, and the rule is recorded in `context/ui-context.md` §5.1.
+- **Prior delivery:** S05 originally passed with 120 tests; this approved follow-up reopens the
+  step to replace its Welcome content and add the unavailable Login destination. The prior
+  implementation remains documented in `context/progress-tracker.md`.
+- **Completed:** Revised S05 — 117 tests pass, `typecheck` and lint clean, Android export succeeds.
+  The Welcome/Login screens were manually inspected in the browser at 360×640. The Login action
+  is intentionally an unavailable notice until local client accounts and persistence are built.
 
 ---
 
-### [ ] S06 — Request-type selection
+### [x] S06 — Request-type selection
 
 - **Objective:** Let the client choose "for my child" or "for myself" via a bottom sheet, and route
   accordingly.
@@ -289,19 +297,25 @@ admin screens that consume it.
   `src/features/request/components/request-type-options.tsx`, dictionary updates.
 - **Data & state:** The draft store gains `journeyType: 'child' | 'self'`.
 - **Acceptance criteria:**
-  - [ ] The sheet is dismissible by swipe and by back, and dismissal returns to Welcome.
-  - [ ] Each option navigates to the correct destination.
-  - [ ] The selection is remembered if the user goes back and re-enters.
-  - [ ] FR and EN copy both present.
+  - [x] The sheet is dismissible by swipe and by back, and dismissal returns to Welcome.
+  - [x] Each option navigates to the correct destination.
+  - [x] The selection is remembered if the user goes back and re-enters.
+  - [x] FR and EN copy both present.
 - **Tests:** A test that each option routes to the expected route; a dismiss test.
 - **Definition of done:** The request-type sheet works in both languages and routes correctly.
 - **Depends on:** S05.
+- **Completed:** Route-based request-type sheet with child/adult routing, journey selection stored in
+  the request draft store, and back/Escape/swipe dismissal. Full verification passed: typecheck,
+  lint, 123 tests; manually checked the 360×640 web layout, option routing, Escape and swipe-down.
 
-### [ ] S07 — Child list and child form
+### [x] S07 — Child list and child form
 
 - **Objective:** Let a parent register, edit and remove multiple children.
 - **Scope:** `src/features/children/**`, `app/(client)/children/**`.
 - **Prerequisites:** S06.
+- **Decision:** R-01 confirmed by the maintainer on 2026-10-23. Following S07 completion, the
+  maintainer requested that the form collect a year of birth and derive age; this supersedes the
+  former R-32 ISO date / age input approach.
 - **Tasks:**
   1. Define the `Child` type and the Zod schema per `context/business-rules.md` §11.1.
   2. Implement the draft/record conversion helpers and their unit tests.
@@ -310,7 +324,8 @@ admin screens that consume it.
      blur/submit validation timing of `context/code-standards.md` §4.5.
   5. Implement edit and remove, with a confirmation dialog for removal.
   6. Add the copy to both dictionaries.
-  7. Seed the draft store's `childIds` when the journey type is `child`.
+  7. Keep the child drafts in the request draft store for the child journey; the request's
+     `childIds` are derived when the request is submitted.
 - **Expected files:** `src/features/children/types.ts`, `src/features/children/validation.ts`,
   `src/features/children/components/child-list-item.tsx`,
   `src/features/children/screens/child-list-screen.tsx`,
@@ -318,22 +333,32 @@ admin screens that consume it.
   `app/(client)/children/form.tsx`, dictionary updates.
 - **Data & state:** The children live in the request draft store until the request is submitted.
 - **Acceptance criteria:**
-  - [ ] Two children can be added, edited and removed.
-  - [ ] The empty state renders when there are no children.
-  - [ ] Validation rejects an empty first name, a missing level, and an out-of-range age/birth date.
-  - [ ] Exactly one of `birthDate` / `age` is accepted.
-  - [ ] Removing a child asks for confirmation.
-  - [ ] The "Continue" action is enabled only when ≥ 1 child exists.
+  - [x] Two children can be added, edited and removed.
+  - [x] The empty state renders when there are no children.
+  - [x] Validation rejects an empty first name, a missing level, and a birth year that is invalid
+    or derives an age outside 3–25.
+  - [x] A required four-digit `yearOfBirth` is collected; displayed age is derived from the
+    current calendar year.
+  - [x] Removing a child asks for confirmation.
+  - [x] The "Continue" action is enabled only when ≥ 1 child exists.
 - **Tests:** Schema tests (valid + each invalid rule); a list render test; a form submit test; an
   add/edit/remove integration test through the store.
 - **Definition of done:** The parent can build a list of children with validated data.
 - **Depends on:** S06.
+- **Completed:** Child drafts, list and form are implemented with localized validation,
+  add/edit/remove confirmation, and guarded navigation. Typecheck, lint, all 147 Jest tests, and
+  Android export pass; the parent flow, empty state, validation error and save confirmation were
+  manually checked at 360×640. The later birth-year adjustment is reflected in the current
+  acceptance criteria and R-32.
 
-### [ ] S08 — Child needs
+### [x] S08 — Child needs
 
 - **Objective:** Let a parent describe one or more learning needs per child.
 - **Scope:** `src/features/request/**` (needs), `app/(client)/needs/child/[childId].tsx`.
 - **Prerequisites:** S07.
+- **Decision:** R-02 confirmed by the maintainer on 2026-10-23: children are profile-scoped and
+  reusable; needs are request-scoped and re-entered for each request. R-33 confirmed: cadence is
+  stored as a selected string option because Flexible/monthly do not map to a numeric weekly rate.
 - **Tasks:**
   1. Define the `LearningNeed` type and the Zod schema per `context/business-rules.md` §11.2,
      including the `location` conditional on `format`.
@@ -352,43 +377,51 @@ admin screens that consume it.
   `app/(client)/needs/child/[childId].tsx`, dictionary updates.
 - **Data & state:** Needs live in the draft store, keyed by `childId`.
 - **Acceptance criteria:**
-  - [ ] Two needs can be added to the same child; they appear as independent items.
-  - [ ] Each need can be edited and removed independently.
-  - [ ] `location` is required for `home` and `center`, optional for `online`.
-  - [ ] The tutor-preference note states that it is not a guarantee.
-  - [ ] A child with zero needs cannot continue.
-  - [ ] Each child's needs are scoped to that child only.
+  - [x] Two needs can be added to the same child; they appear as independent items.
+  - [x] Each need can be edited and removed independently.
+  - [x] `location` is required for `home` and `center`, optional for `online`.
+  - [x] The tutor-preference note states that it is not a guarantee.
+  - [x] A child with zero needs cannot continue.
+  - [x] Each child's needs are scoped to that child only.
 - **Tests:** Schema tests including the conditional `location`; a test that two needs on one child
   coexist; a test that needs are isolated between children.
 - **Definition of done:** Multi-need, multi-child capture works and is validated.
 - **Depends on:** S07.
 
-### [ ] S09 — Adult learning request
+### [x] S09 — Adult learning request
 
 - **Objective:** Provide the same need-capture journey for an adult, without child registration.
 - **Scope:** `src/features/request/**`, `app/(client)/needs/self.tsx`.
 - **Prerequisites:** S06 (the routing already exists); reuses S08's need form.
 - **Tasks:**
   1. Implement the adult needs screen per `design.md`, reusing the S08 need form and list items.
-  2. Set `learnerIsClient: true` and `childIds: []` on the needs.
+  2. Set `learnerIsClient: true` on each adult need; keep the adult journey independent of child
+     records so its submitted request has `childIds: []`.
   3. Hide the tutor-preference control only if the business decides it applies to adults too —
      **default: it applies to both journeys** (the tutor-preference requirement is written in the
      parent journey section of the brief but is meaningful for adults as well). Record the
      decision in the risk register if it is changed.
   4. Add the copy to both dictionaries.
 - **Expected files:** `src/features/request/screens/adult-needs-screen.tsx`,
-  `app/(client)/needs/self.tsx`, dictionary updates.
-- **Data & state:** The draft store's needs, with `learnerIsClient: true`.
+  `src/features/request/types.ts`, `src/features/request/services/need-draft.ts`,
+  `src/store/request-draft-store.ts`, `app/(client)/needs/self.tsx`, dictionary updates and
+  adult-flow tests.
+- **Data & state:** Child needs remain keyed by child ID; adult needs are stored separately with
+  `learnerIsClient: true` and no `childId`.
 - **Acceptance criteria:**
-  - [ ] The adult journey never asks for a child.
-  - [ ] The same validation rules apply as for a child.
-  - [ ] At least one need is required to continue.
-  - [ ] The adult needs are independent of any child record.
+  - [x] The adult journey never asks for a child.
+  - [x] The same validation rules apply as for a child.
+  - [x] At least one need is required to continue.
+  - [x] The adult needs are independent of any child record.
 - **Tests:** A test that the adult flow creates no child record; a validation test.
 - **Definition of done:** The adult journey mirrors the parent journey minus the children.
 - **Depends on:** S06, S08 (reuses the need form).
+- **Completed:** Adult needs use a separate `selfNeeds` collection; the shared form validates and
+  saves adult-owned needs without `childId`; the route guard, adult copy, tutor preference and
+  Continue gate are implemented. Typecheck, lint and all 169 tests pass; the adult flow, empty
+  state, invalid form, nested selectors and contact navigation were manually checked at 360×640.
 
-### [ ] S10 — Contact details
+### [x] S10 — Contact details
 
 - **Objective:** Collect the client's identity and contact details, with the phone number as the
   primary identifier.
@@ -403,19 +436,27 @@ admin screens that consume it.
   5. Add the copy to both dictionaries.
 - **Expected files:** `src/features/client/types.ts`, `src/features/client/validation.ts`,
   `src/features/client/lib/phone.ts`, `src/features/client/screens/contact-screen.tsx`,
+  `src/features/client/services/find-client-by-phone.ts`, `src/store/client-store.ts`,
   `app/(client)/contact.tsx`, dictionary updates.
-- **Data & state:** The draft store's contact section.
+- **Data & state:** Normalized contact details and the associated client ID are saved in the
+  request draft. Existing complete profiles are looked up in the in-memory client store; durable
+  profile persistence remains scheduled for S14.
 - **Acceptance criteria:**
-  - [ ] The phone number is required and validated.
-  - [ ] An invalid email is rejected; an empty email is accepted.
-  - [ ] The normalised phone is stored, not the raw string.
-  - [ ] An existing client with the same number is detected (no duplicate profile).
-  - [ ] All errors are shown as text under the field.
-- **Tests:** Phone normalisation tests (several formats), schema tests, a duplicate-detection test.
+  - [x] The phone number is required and validated.
+  - [x] An invalid email is rejected; an empty email is accepted.
+  - [x] The normalised phone is stored, not the raw string.
+  - [x] An existing client with the same number is detected (no duplicate profile).
+  - [x] All errors are shown as text under the field.
+- **Tests:** Phone normalisation tests (several formats), schema tests, duplicate lookup tests and
+  contact-screen tests for inline errors and the existing-client choice.
 - **Definition of done:** Validated contact capture with correct phone normalisation.
 - **Depends on:** S08, S09.
+- **Completed:** Added bilingual contact capture for both journeys, normalized DRC numbers to
+  `+243…`, saved contact details and the client ID in the request draft, and reused matching
+  profiles without creating another. Typecheck, lint and all 191 tests pass; the adult flow,
+  validation errors, empty optional email and navigation to PIN were checked in a 360×640 browser.
 
-### [ ] S11 — PIN demonstration flow
+### [x] S11 — PIN demonstration flow
 
 - **Objective:** Let the client create and confirm a PIN, stored **only** as a salted hash, with the
   prototype limitation clearly stated in the UI.
@@ -432,17 +473,24 @@ admin screens that consume it.
   `src/features/client/screens/pin-screen.tsx`, `app/(client)/pin.tsx`, dictionary updates.
 - **Data & state:** The client profile draft in the store.
 - **Acceptance criteria:**
-  - [ ] The PIN must be exactly 4 digits.
-  - [ ] A mismatched confirmation shows an inline error and does not advance.
-  - [ ] The stored value is a hash + salt; the plain PIN appears nowhere in the persisted state
+  - [x] The PIN must be exactly 4 digits.
+  - [x] A mismatched confirmation shows an inline error and does not advance.
+  - [x] The stored value is a hash + salt; the plain PIN appears nowhere in the persisted state
         (verified by a test inspecting the serialised state).
-  - [ ] The screen states that this is a demonstration and not production authentication.
+  - [x] The screen states that this is a demonstration and not production authentication.
+  - [x] A client continuing with an existing profile verifies its PIN without replacing the
+    profile's stored credentials.
 - **Tests:** Hash determinism (same salt + PIN → same hash; different salt → different hash), the
-  "no plain PIN in the persisted state" test, a mismatch test.
+  "no plain PIN in the client store" test, form validation and mismatch tests, and existing-profile
+  PIN verification.
 - **Definition of done:** The PIN flow works and provably stores no plaintext.
 - **Depends on:** S10.
+- **Completed:** Added secure PIN creation and existing-profile verification. New client profiles
+  store only the random salt and SHA-256 hash; the PIN is never saved. Typecheck, lint, all Jest
+  tests and an Android export pass; tests verify validation, mismatch recovery, hashing and
+  serialized client-store contents.
 
-### [ ] S12 — Request review and submission
+### [x] S12 — Request review and submission
 
 - **Objective:** Let the client review the whole request, submit it, and receive a local reference
   and a confirmation.
@@ -465,12 +513,12 @@ admin screens that consume it.
   `app/(client)/submitted.tsx`, dictionary updates.
 - **Data & state:** The request moves from the draft store to the request store.
 - **Acceptance criteria:**
-  - [ ] The review lists every entered value correctly, in both journeys.
-  - [ ] Submission is blocked when a required part is missing, with a clear message.
-  - [ ] On submission a reference is generated, the status is `received`, an event is written and a
+  - [x] The review lists every entered value correctly, in both journeys.
+  - [x] Submission is blocked when a required part is missing, with a clear message.
+  - [x] On submission a reference is generated, the status is `received`, an event is written and a
         notification is created.
-  - [ ] The draft is cleared after a successful submission.
-  - [ ] The confirmation screen explains the next step in plain language.
+  - [x] The draft is cleared after a successful submission.
+  - [x] The confirmation screen explains the next step in plain language.
 - **Tests:** A submission integration test (draft → submitted request, status, event, notification,
   cleared draft); an incomplete-request test; a reference-format test.
 - **Definition of done:** The client can complete and submit a request and receives a reference.
