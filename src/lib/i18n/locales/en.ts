@@ -24,6 +24,67 @@ export const en = {
 
   'dashboard.needsCount_one': '{count} learning need',
   'dashboard.needsCount_other': '{count} learning needs',
+  'dashboard.greeting': 'Hello {firstName}.',
+  'dashboard.title': 'Where does your request stand?',
+  'dashboard.nextStep': 'Next step',
+  'dashboard.requestReference': 'Request reference',
+  'dashboard.timelineTitle': 'Request progress',
+  'dashboard.timeline.received': 'Request received',
+  'dashboard.timeline.review': 'Review',
+  'dashboard.timeline.proposal': 'Proposal',
+  'dashboard.timeline.contract': 'Contract',
+  'dashboard.timeline.payment': 'Payment',
+  'dashboard.timeline.service': 'Service',
+  'dashboard.needsTitle': 'Learning needs',
+  'dashboard.you': 'You',
+  'dashboard.myRequests': 'My requests',
+  'dashboard.notifications': 'Notifications',
+  'dashboard.unreadCount_one': '{count} unread notification',
+  'dashboard.unreadCount_other': '{count} unread notifications',
+  'dashboard.notificationsNone': 'No unread notifications',
+  'dashboard.emptyTitle': 'No request yet',
+  'dashboard.emptyDescription':
+    'Start a request to find a tutor for your child or for yourself.',
+  'dashboard.startRequest': 'Start a request',
+  'dashboard.next.received': 'We are reviewing your request',
+  'dashboard.next.received.description':
+    'Our team will study the needs and prepare a proposal.',
+  'dashboard.next.underReview': 'Your request is under review',
+  'dashboard.next.underReview.description': 'Our team is looking for a suitable tutor.',
+  'dashboard.next.proposalSent': 'Review the proposal',
+  'dashboard.next.proposalSent.description': 'A proposal is ready. Accept it or decline it.',
+  'dashboard.next.proposalAccepted': 'Contract being prepared',
+  'dashboard.next.proposalAccepted.description':
+    'We are preparing the contract for your request.',
+  'dashboard.next.proposalRejected': 'We are revising your proposal',
+  'dashboard.next.proposalRejected.description':
+    'Your request stays open while we prepare a new proposal.',
+  'dashboard.next.contractSigned': 'Invoice being prepared',
+  'dashboard.next.contractSigned.description':
+    'The contract is signed. We are preparing your invoice.',
+  'dashboard.next.awaitingPayment': 'Pay the invoice',
+  'dashboard.next.awaitingPayment.description':
+    'Your invoice is ready. Declare your Mobile Money payment after paying.',
+  'dashboard.next.paymentVerified': 'Receipt being prepared',
+  'dashboard.next.paymentVerified.description':
+    'Your payment is verified. We are preparing the receipt.',
+  'dashboard.next.inService': 'Service in progress',
+  'dashboard.next.inService.description':
+    'Your tutor is working with you. See the tutor details to get in touch.',
+  'dashboard.next.completed': 'Service completed',
+  'dashboard.next.completed.description':
+    'This request is complete. Thank you for using Mon Précepteur.',
+  'dashboard.next.onHold': 'Your request is on hold',
+  'dashboard.next.onHold.description':
+    'The service is temporarily paused. We will notify you when it resumes.',
+  'dashboard.next.cancelled': 'Request cancelled',
+  'dashboard.next.cancelled.description':
+    'This request is closed. You can start a new request at any time.',
+  'dashboard.action.reviewProposal': 'Review the proposal',
+  'dashboard.action.signContract': 'Sign the contract',
+  'dashboard.action.payInvoice': 'Pay the invoice',
+  'dashboard.action.declarePayment': 'Declare your payment',
+  'dashboard.action.seeTutor': 'See your tutor',
 
   'nav.adminAssignment': 'Tutor assignment',
   'nav.adminContract': 'Contract preparation',

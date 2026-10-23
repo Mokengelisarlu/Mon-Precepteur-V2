@@ -7,6 +7,7 @@ export interface CardProps {
   subtitle?: string;
   onPress?: () => void;
   elevated?: boolean;
+  accessibilityLabel?: string;
   className?: string;
   testID?: string;
 }
@@ -17,6 +18,7 @@ export function Card({
   subtitle,
   onPress,
   elevated = false,
+  accessibilityLabel,
   className,
   testID,
 }: CardProps): React.JSX.Element {
@@ -42,7 +44,7 @@ export function Card({
     return (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={title}
+        accessibilityLabel={accessibilityLabel ?? title}
         onPress={onPress}
         className={baseClass}
         testID={testID}

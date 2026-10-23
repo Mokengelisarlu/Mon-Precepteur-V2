@@ -361,7 +361,8 @@ describe('Navigation shell', () => {
 
     await fireEvent.press(screen.getByText('Back to the dashboard'));
 
-    expect(screen.getByText('/dashboard')).toBeTruthy();
+    expect(screen.getByTestId('dashboard-screen')).toBeTruthy();
+    expect(screen.getByText('No request yet')).toBeTruthy();
     expect(screen.queryByTestId('not-found-state')).toBeNull();
   });
 

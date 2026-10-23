@@ -26,6 +26,68 @@ export const fr: Record<TranslationKey, string> = {
 
   'dashboard.needsCount_one': '{count} besoin',
   'dashboard.needsCount_other': '{count} besoins',
+  'dashboard.greeting': 'Bonjour {firstName}.',
+  'dashboard.title': 'Où en est votre demande ?',
+  'dashboard.nextStep': 'Étape suivante',
+  'dashboard.requestReference': 'Référence de la demande',
+  'dashboard.timelineTitle': 'Progression de la demande',
+  'dashboard.timeline.received': 'Demande reçue',
+  'dashboard.timeline.review': 'Analyse',
+  'dashboard.timeline.proposal': 'Proposition',
+  'dashboard.timeline.contract': 'Contrat',
+  'dashboard.timeline.payment': 'Paiement',
+  'dashboard.timeline.service': 'Service',
+  'dashboard.needsTitle': "Besoins d'apprentissage",
+  'dashboard.you': 'Vous',
+  'dashboard.myRequests': 'Mes demandes',
+  'dashboard.notifications': 'Notifications',
+  'dashboard.unreadCount_one': '{count} notification non lue',
+  'dashboard.unreadCount_other': '{count} notifications non lues',
+  'dashboard.notificationsNone': 'Aucune notification non lue',
+  'dashboard.emptyTitle': "Aucune demande pour l'instant",
+  'dashboard.emptyDescription':
+    'Commencez une demande pour trouver un précepteur pour votre enfant ou pour vous.',
+  'dashboard.startRequest': 'Commencer une demande',
+  'dashboard.next.received': 'Nous examinons votre demande',
+  'dashboard.next.received.description':
+    'Notre équipe étudie les besoins et prépare une proposition.',
+  'dashboard.next.underReview': "Votre demande est en cours d'analyse",
+  'dashboard.next.underReview.description': 'Notre équipe cherche un précepteur adapté.',
+  'dashboard.next.proposalSent': 'Consultez la proposition',
+  'dashboard.next.proposalSent.description':
+    'Une proposition est prête. Acceptez-la ou refusez-la.',
+  'dashboard.next.proposalAccepted': 'Contrat en préparation',
+  'dashboard.next.proposalAccepted.description':
+    'Nous préparons le contrat de votre demande.',
+  'dashboard.next.proposalRejected': 'Nous révisons votre proposition',
+  'dashboard.next.proposalRejected.description':
+    'Votre demande reste ouverte pendant que nous préparons une nouvelle proposition.',
+  'dashboard.next.contractSigned': 'Facture en préparation',
+  'dashboard.next.contractSigned.description':
+    'Le contrat est signé. Nous préparons votre facture.',
+  'dashboard.next.awaitingPayment': 'Réglez la facture',
+  'dashboard.next.awaitingPayment.description':
+    'Votre facture est prête. Déclarez votre paiement Mobile Money après avoir payé.',
+  'dashboard.next.paymentVerified': 'Reçu en préparation',
+  'dashboard.next.paymentVerified.description':
+    'Votre paiement est vérifié. Nous préparons le reçu.',
+  'dashboard.next.inService': 'Service en cours',
+  'dashboard.next.inService.description':
+    'Votre précepteur vous accompagne. Consultez ses coordonnées pour le contacter.',
+  'dashboard.next.completed': 'Service terminé',
+  'dashboard.next.completed.description':
+    "Cette demande est terminée. Merci d'avoir utilisé Mon Précepteur.",
+  'dashboard.next.onHold': 'Votre demande est en pause',
+  'dashboard.next.onHold.description':
+    'Le service est temporairement en pause. Nous vous préviendrons à la reprise.',
+  'dashboard.next.cancelled': 'Demande annulée',
+  'dashboard.next.cancelled.description':
+    'Cette demande est clôturée. Vous pouvez commencer une nouvelle demande à tout moment.',
+  'dashboard.action.reviewProposal': 'Consulter la proposition',
+  'dashboard.action.signContract': 'Signer le contrat',
+  'dashboard.action.payInvoice': 'Régler la facture',
+  'dashboard.action.declarePayment': 'Déclarer votre paiement',
+  'dashboard.action.seeTutor': 'Voir votre précepteur',
 
   'nav.adminAssignment': 'Affectation du précepteur',
   'nav.adminContract': 'Préparation du contrat',

@@ -523,6 +523,12 @@ admin screens that consume it.
   cleared draft); an incomplete-request test; a reference-format test.
 - **Definition of done:** The client can complete and submit a request and receives a reference.
 - **Depends on:** S07, S08, S09, S10, S11.
+- **Completed:** Parent and adult review screens render every captured value with per-section edit
+  links; submission validates completeness, creates the `received` request with its reference,
+  promotes children and needs, writes the client `ActivityEvent`, creates the `request_received`
+  notification and clears the draft. The confirmation screen shows the reference and next steps
+  with a dashboard CTA. Typecheck, lint, all 217 Jest tests / 36 suites and an Android export pass;
+  the parent flow was manually checked in the browser at 360×640.
 
 ---
 

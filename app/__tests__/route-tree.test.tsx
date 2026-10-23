@@ -104,6 +104,8 @@ describe('Route tree', () => {
         expect(screen.getByTestId('review-screen')).toBeTruthy();
       } else if (route === '/submitted') {
         expect(screen.getByTestId('submitted-not-found')).toBeTruthy();
+      } else if (route === '/dashboard') {
+        expect(screen.getByTestId('dashboard-screen')).toBeTruthy();
       } else {
         expect(screen.getByText(route)).toBeTruthy();
       }

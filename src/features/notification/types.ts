@@ -9,4 +9,5 @@ export interface Notification {
   readonly bodyKey: TranslationKey;
   readonly params: Readonly<Record<string, string | number>>;
   readonly createdAt: number;
+  readonly readAt?: number;
 }
