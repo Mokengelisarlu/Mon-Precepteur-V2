@@ -9,8 +9,6 @@ const ROUTES = [
   '/login',
   '/request-type',
   '/children',
-  '/children/form',
-  '/needs/child/chd_1234',
   '/contact',
   '/pin',
   '/review',
@@ -52,10 +50,16 @@ describe('Route tree', () => {
         firstName: 'Amina',
         lastName: 'Kabila',
         phone: '+243812345678',
+        city: 'Lubumbashi',
+        commune: 'Kampemba',
+        quartier: 'Bel-Air',
+        avenue: 'Avenue Lumumba',
+        number: '12B',
+        address: '12B, Avenue Lumumba, Bel-Air, Kampemba, Lubumbashi',
       },
       clientId: 'cli_1234',
       children: [child],
-      needsByChildId: {},
+      onboardingByChildId: {},
       selfNeeds: [],
       tutorPreference: 'none',
     });
@@ -89,11 +93,7 @@ describe('Route tree', () => {
       if (route === '/request-type') {
         expect(screen.getByTestId('request-type-sheet')).toBeTruthy();
       } else if (route === '/children') {
-        expect(screen.getByTestId('child-list-screen')).toBeTruthy();
-      } else if (route === '/children/form') {
-        expect(screen.getByTestId('child-form-sheet')).toBeTruthy();
-      } else if (route === '/needs/child/chd_1234') {
-        expect(screen.getByText('What does Amina need?')).toBeTruthy();
+        expect(screen.getByTestId('child-form-screen')).toBeTruthy();
       } else if (route === '/login') {
         expect(screen.getByTestId('login-unavailable-screen')).toBeTruthy();
       } else if (route === '/contact') {

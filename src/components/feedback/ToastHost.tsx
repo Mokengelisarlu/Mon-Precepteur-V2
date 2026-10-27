@@ -1,6 +1,7 @@
 import type React from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Toast, type ToastVariant } from '@/components/ui';
 
@@ -32,6 +33,7 @@ export interface ToastHostProps {
 
 export function ToastHost({ children, maxToasts = 3 }: ToastHostProps): React.JSX.Element {
   const [toasts, setToasts] = useState<readonly ToastMessage[]>([]);
+  const insets = useSafeAreaInsets();
 
   const dismissToast = useCallback((id: string) => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -67,7 +69,9 @@ export function ToastHost({ children, maxToasts = 3 }: ToastHostProps): React.JS
       {children}
       <View
         pointerEvents="box-none"
-        className="absolute bottom-0 left-0 right-0 items-center pb-[calc(16px+env(safe-area-inset-bottom,0px))] px-l gap-s"
+        className="absolute left-0 right-0 items-center gap-s px-l"
+        style={{ top: 0, paddingTop: insets.top + 16 }}
+        testID="toast-host-container"
       >
         {toasts.map((toast) => (
           <Toast

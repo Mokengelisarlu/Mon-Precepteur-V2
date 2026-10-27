@@ -36,7 +36,7 @@ describe('PIN route', () => {
       contact,
       clientId,
       children: [],
-      needsByChildId: {},
+      onboardingByChildId: {},
       selfNeeds: [],
       tutorPreference: 'none',
     });

@@ -1,18 +1,5 @@
 import type { ChildDraftRecord, ChildFormValues, ChildRecord } from '../types';
 
-export function upsertChildDraft(
-  children: readonly ChildDraftRecord[],
-  child: ChildDraftRecord,
-): readonly ChildDraftRecord[] {
-  const existingIndex = children.findIndex((entry) => entry.id === child.id);
-
-  if (existingIndex === -1) {
-    return [...children, child];
-  }
-
-  return children.map((entry) => (entry.id === child.id ? child : entry));
-}
-
 export function removeChildDraft(
   children: readonly ChildDraftRecord[],
   childId: string,

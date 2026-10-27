@@ -1,9 +1,9 @@
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
-import type { ChildRecord } from '@/features/children';
+import { createEmptyChildOnboardingData, type ChildRecord } from '@/features/children';
 import type { ClientProfile } from '@/features/client';
 import type { Notification } from '@/features/notification';
-import type { LearningNeed, RequestRecord } from '@/features/request/types';
+import type { RequestRecord } from '@/features/request/types';
 import { useChildStore } from '@/store/child-store';
 import { useClientStore } from '@/store/client-store';
 import { useDomainStore } from '@/store/domain-store';
@@ -33,27 +33,20 @@ const child: ChildRecord = {
   updatedAt: 100,
 };
 
-const need: LearningNeed = {
-  id: 'ned_1',
-  requestId: 'req_1',
-  childId: child.id,
-  learnerIsClient: false,
-  subject: 'Mathematics',
-  level: 'P4',
-  objective: 'Build confidence with fractions',
-  frequency: 'weekly_2',
-  sessionMinutes: 45,
-  availability: 'Tuesday evenings',
-  format: 'online',
-  createdAt: 100,
-  updatedAt: 100,
+const learningContext = {
+  ...createEmptyChildOnboardingData(),
+  firstName: child.firstName,
+  lastName: child.lastName ?? '',
+  birthYear: String(child.yearOfBirth),
+  grade: 'p4',
+  estimatedLevel: 'satisfactory',
 };
 
 const receivedRequest: RequestRecord = {
   id: 'req_2',
   reference: 'MP-2026-0002',
   clientId: client.id,
-  needIds: [need.id],
+  needIds: [],
   tutorPreference: 'none',
   status: 'received',
   createdAt: 2000,
@@ -61,13 +54,14 @@ const receivedRequest: RequestRecord = {
   submittedAt: 2000,
   type: 'child',
   childIds: [child.id],
+  learningContext,
 };
 
 const completedRequest: RequestRecord = {
   id: 'req_1',
   reference: 'MP-2026-0001',
   clientId: client.id,
-  needIds: [need.id],
+  needIds: [],
   tutorPreference: 'none',
   status: 'completed',
   createdAt: 1000,
@@ -75,6 +69,7 @@ const completedRequest: RequestRecord = {
   submittedAt: 1000,
   type: 'child',
   childIds: [child.id],
+  learningContext,
 };
 
 const unreadNotification: Notification = {
@@ -93,12 +88,12 @@ describe('Dashboard route', () => {
     useSessionStore.getState().setLocaleOverride('en');
     useClientStore.setState({ clients: [client] });
     useRequestStore.setState({ requests: [receivedRequest] });
-    useDomainStore.setState({ needs: [need] });
+    useDomainStore.setState({ needs: [] });
     useChildStore.setState({ children: [child] });
     useNotificationStore.setState({ notifications: [unreadNotification] });
   });
 
-  it('renders the latest request with its needs and unread notifications', async () => {
+  it('renders a child request without creating child needs and shows unread notifications', async () => {
     const result = renderRouter(undefined, { initialUrl: '/dashboard' });
 
     await result;
@@ -107,8 +102,8 @@ describe('Dashboard route', () => {
     expect(screen.getByTestId('dashboard-screen')).toBeTruthy();
     expect(screen.getByText('Hello Amina.')).toBeTruthy();
     expect(screen.getByText('MP-2026-0002')).toBeTruthy();
-    expect(screen.getByText('Junior Kabila')).toBeTruthy();
-    expect(screen.getByText('Mathematics')).toBeTruthy();
+    expect(screen.queryByText('Junior Kabila')).toBeNull();
+    expect(screen.queryByText('Mathematics')).toBeNull();
     expect(screen.getByText('1 unread notification')).toBeTruthy();
   });
 

@@ -36,13 +36,16 @@ describe('childFormSchema', () => {
     }
   });
 
-  it.each([
-    String(new Date().getFullYear() - 2),
-    String(new Date().getFullYear() - 26),
-    String(new Date().getFullYear() + 1),
-    '20xx',
-    '',
-  ])('rejects invalid year of birth %s', (yearOfBirth) => {
+  it('accepts a birth year outside the former 3–25 age range', () => {
+    expect(
+      childFormSchema.safeParse({
+        ...validChild,
+        yearOfBirth: String(new Date().getFullYear() - 40),
+      }).success,
+    ).toBe(true);
+  });
+
+  it.each(['20xx', '123', ''])('rejects invalid year of birth %s', (yearOfBirth) => {
     const result = childFormSchema.safeParse({ ...validChild, yearOfBirth });
 
     expect(result.success).toBe(false);

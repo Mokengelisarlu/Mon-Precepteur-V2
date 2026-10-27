@@ -23,7 +23,7 @@ export function RequestTypeScreen({
       onClose={onClose}
       title={t('requestType.title')}
       accessibilityLabel={t('requestType.title')}
-      snapPoints={['45%']}
+      snapPoints={['40%']}
       testID="request-type-sheet"
     >
       <RequestTypeOptions onSelect={onSelect} />

@@ -17,14 +17,14 @@ export function RequestTypeOptions({
   const { t } = useTranslation();
 
   return (
-    <View className="gap-s" testID="request-type-options">
+    <View className="gap-md" testID="request-type-options">
       <ListItem
         title={t('requestType.child')}
         subtitle={t('requestType.childDescription')}
         leadingIcon={Baby}
         trailingIcon={ChevronRight}
         accessibilityHint={t('requestType.childDescription')}
-        className="rounded-card bg-surface-low px-l"
+        className="rounded-card bg-surface-low px-l py-md"
         onPress={() => onSelect('child')}
         testID="request-type-child"
       />
@@ -34,7 +34,7 @@ export function RequestTypeOptions({
         leadingIcon={UserRound}
         trailingIcon={ChevronRight}
         accessibilityHint={t('requestType.selfDescription')}
-        className="rounded-card bg-surface-low px-l"
+        className="rounded-card bg-surface-low px-l py-md"
         onPress={() => onSelect('self')}
         testID="request-type-self"
       />

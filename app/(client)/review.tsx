@@ -1,10 +1,12 @@
 import * as Crypto from 'expo-crypto';
 import { Redirect, useRouter } from 'expo-router';
 import type React from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import { useToast } from '@/components/feedback/ToastHost';
 import { ReviewScreen } from '@/features/request/screens/review-screen';
 import { submitRequest, type SubmitRequestFailureKey } from '@/features/request/services/submit-request';
+import { useTranslation } from '@/hooks/use-translation';
 import { routes } from '@/lib/navigation/routes';
 import { useActivityStore } from '@/store/activity-store';
 import { useChildStore } from '@/store/child-store';
@@ -20,7 +22,7 @@ export default function ReviewRoute(): React.JSX.Element {
   const contact = useRequestDraftStore((state) => state.contact);
   const clientId = useRequestDraftStore((state) => state.clientId);
   const children = useRequestDraftStore((state) => state.children);
-  const needsByChildId = useRequestDraftStore((state) => state.needsByChildId);
+  const onboardingByChildId = useRequestDraftStore((state) => state.onboardingByChildId);
   const selfNeeds = useRequestDraftStore((state) => state.selfNeeds);
   const tutorPreference = useRequestDraftStore((state) => state.tutorPreference);
   const clearDraft = useRequestDraftStore((state) => state.clearDraft);
@@ -31,11 +33,20 @@ export default function ReviewRoute(): React.JSX.Element {
   const requests = useRequestStore((state) => state.requests);
   const addActivityEvent = useActivityStore((state) => state.addActivityEvent);
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { showToast } = useToast();
+  const { t } = useTranslation();
   const [errorMessage, setErrorMessage] = useState<SubmitRequestFailureKey | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const isSubmittingRef = useRef(false);
   const client = clients.find((entry) => entry.id === clientId);
+
+  useEffect(() => {
+    if (hasSubmitted) {
+      showToast({ message: t('submitted.successToast'), variant: 'success' });
+      router.replace(routes.dashboard);
+    }
+  }, [hasSubmitted, router, showToast, t]);
 
   const handleSubmit = (): void => {
     if (isSubmittingRef.current || journeyType === null) {
@@ -51,7 +62,7 @@ export default function ReviewRoute(): React.JSX.Element {
         contact,
         clientId,
         children,
-        needsByChildId,
+        onboardingByChildId,
         selfNeeds,
         tutorPreference,
       },
@@ -77,19 +88,12 @@ export default function ReviewRoute(): React.JSX.Element {
     saveRequest(result.value.request);
     addActivityEvent(result.value.activityEvent);
     addNotification(result.value.notification);
-    setSubmittedRequestId(result.value.request.id);
     clearDraft();
+    setHasSubmitted(true);
   };
 
-  if (submittedRequestId !== null) {
-    return (
-      <Redirect
-        href={{
-          pathname: routes.submitted,
-          params: { requestId: submittedRequestId },
-        }}
-      />
-    );
+  if (hasSubmitted) {
+    return <></>;
   }
 
   if (journeyType === null) {
@@ -110,26 +114,21 @@ export default function ReviewRoute(): React.JSX.Element {
     <ReviewScreen
       journeyType={journeyType}
       childDrafts={children}
-      needsByChildId={needsByChildId}
+      onboardingByChildId={onboardingByChildId}
       selfNeeds={selfNeeds}
       contact={contact}
       tutorPreference={tutorPreference}
       errorMessage={errorMessage}
       isSubmitting={isSubmitting}
-      onEditChildren={() => router.replace(routes.children)}
-      onEditNeedsForChild={(childId) => router.replace(routes.needsForChild(childId))}
+      onEditChild={() => {
+        const child = children[0];
+        router.replace(child === undefined ? routes.children : routes.childrenFor(child.id));
+      }}
       onEditSelfNeeds={() => router.replace(routes.needsSelf)}
       onEditLearner={() => router.replace(routes.contact)}
       onEditContact={() => router.replace(routes.contact)}
       onEditTutorPreference={() => {
-        if (journeyType === 'self') {
-          router.replace(routes.needsSelf);
-          return;
-        }
-        const firstChild = children[0];
-        router.replace(
-          firstChild === undefined ? routes.children : routes.needsForChild(firstChild.id),
-        );
+        router.replace(routes.needsSelf);
       }}
       onSubmit={handleSubmit}
     />

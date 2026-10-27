@@ -5,7 +5,11 @@ const validForm = {
   lastName: ' Kabila ',
   phone: '0812345678',
   email: '',
-  address: ' Gombe ',
+  city: ' Lubumbashi ',
+  commune: ' Kampemba ',
+  quartier: ' Bel-Air ',
+  avenue: ' Avenue Lumumba ',
+  number: ' 12B ',
 };
 
 describe('contactFormSchema', () => {
@@ -14,7 +18,12 @@ describe('contactFormSchema', () => {
       firstName: 'Amina',
       lastName: 'Kabila',
       phone: '+243812345678',
-      address: 'Gombe',
+      city: 'Lubumbashi',
+      commune: 'Kampemba',
+      quartier: 'Bel-Air',
+      avenue: 'Avenue Lumumba',
+      number: '12B',
+      address: '12B, Avenue Lumumba, Bel-Air, Kampemba, Lubumbashi',
     });
   });
 
@@ -53,14 +62,19 @@ describe('contactFormSchema', () => {
     }
   });
 
-  it('requires a valid phone and bounds the optional address', () => {
+  it('requires a valid phone and all bounded address parts', () => {
     const invalidPhone = contactFormSchema.safeParse({ ...validForm, phone: '12345' });
     const invalidAddress = contactFormSchema.safeParse({
       ...validForm,
-      address: 'a'.repeat(121),
+      avenue: 'a'.repeat(121),
+    });
+    const missingQuartier = contactFormSchema.safeParse({
+      ...validForm,
+      quartier: ' ',
     });
 
     expect(invalidPhone.success).toBe(false);
     expect(invalidAddress.success).toBe(false);
+    expect(missingQuartier.success).toBe(false);
   });
 });

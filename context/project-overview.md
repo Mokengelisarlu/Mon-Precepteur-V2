@@ -11,9 +11,10 @@
 
 **Mon Précepteur** is a mobile-first educational-support platform for the Democratic Republic of the Congo.
 
-The client describes a learning need. Mon Précepteur takes care of everything else: identifying the
-need, selecting a suitable tutor, presenting a service proposal, producing the contract and invoice,
-collecting payment through Mobile Money, verifying it, and assigning the tutor.
+The client describes a learning need or, for a parent, the child's learning context. Mon Précepteur
+takes care of everything else: analysing the request, selecting a suitable tutor, presenting a
+service proposal, producing the contract and invoice, collecting payment through Mobile Money,
+verifying it, and assigning the tutor.
 
 The product is deliberately **not** a public tutor marketplace. The client never browses dozens of
 tutor profiles, never compares them, and never has to organize the service himself. The client
@@ -56,12 +57,16 @@ verifiable, receipted service assignment.
 | Context | Has one or more children in primary or secondary school in the DRC |
 | Goal | Get reliable, structured academic support without juggling the logistics |
 | Has | A phone number, a Mobile Money account, limited time |
-| Needs | Register several children, describe each child's needs, receive a clear proposal, sign, pay, know who the tutor is and when they come |
+| Needs | Register one child per request, describe the child's learning context, receive a clear proposal, sign, pay, know who the tutor is and when they come |
 | Constraint | May have low technical confidence; must never feel "administratively overwhelmed" |
 
-Capabilities in the product: register multiple children, describe one or more needs per child,
-submit a request, track progress, view/respond to proposals, review and sign contracts, view
-invoices and receipts, declare a Mobile Money payment, view the assigned tutor and agreed terms.
+Capabilities in the product: register multiple children in the client profile over time, start a
+separate request for each child, submit the child's guided learning context, track progress,
+view/respond to proposals, review and sign contracts, view invoices and receipts, declare a Mobile
+Money payment, and view the assigned tutor and agreed terms. The current child request flow does
+not create `LearningNeed` records; preparing proposals for those context-only requests is deferred
+until the admin workflow is decided (R-41). Additional-child profile management is planned for S13;
+the initial request journey collects exactly one child.
 
 ### 3.2 Adult learner (secondary persona)
 
@@ -100,8 +105,8 @@ payment, one receipt.
 
 ### 4.1 The managed workflow (the core of the product)
 
-1. Client submits a request (needs + contact details).
-2. Mon Précepteur analyses the needs.
+1. Client submits a request (child learning context or adult learning needs, plus contact details).
+2. Mon Précepteur analyses the request.
 3. The team identifies suitable tutors.
 4. The client receives a service proposal.
 5. The client accepts or rejects the proposal.
@@ -138,10 +143,9 @@ administrator-facing.
 ```
 Welcome
   → Request type (bottom sheet: For my child | For myself)
-      ├─ For my child → Children list → Child form → Child needs → Contact → PIN → Review & submit
+      ├─ For my child → Child details and learning context → Parent contact → PIN → Review & submit
       └─ For myself   → Adult needs → Contact → PIN → Review & submit
-  → Confirmation ("Request received")
-  → Client dashboard
+  → Top success toast → Client dashboard
       → Proposal (view → accept / reject)
       → Contract (view → simulated signature)
       → Invoice → Mobile Money declaration → "Pending verification"
@@ -154,8 +158,8 @@ Welcome
 
 ```
 Admin dashboard (incoming requests)
-  → Request detail (client, children, needs)
-  → Proposal builder (choose needs, tutor, price, frequency, duration, conditions) → send
+  → Request detail (client, child or learner, learning context and any needs)
+  → Proposal builder (eligible needs, tutor, price, frequency, duration, conditions) → send
   → Contract preparation → issue → client signs
   → Invoice preparation → issue
   → Payment verification (confirm / reject with reason) → receipt issued
@@ -179,12 +183,12 @@ Admin dashboard (incoming requests)
 | Area | Included |
 |---|---|
 | Onboarding | Welcome, request-type selection (bottom sheet) |
-| Child journey | Child list, add/edit/remove child, one form per child with multiple needs |
+| Child journey | One-child-per-request onboarding with learning context; no client-created `LearningNeed` records. Child proposal preparation is deferred under R-41. Child profile management is deferred to S13. |
 | Adult journey | Adult learning-need form (no child registration) |
-| Contact | First/last name, phone (primary identifier), optional email, optional neighbourhood |
+| Contact | Two-step parent/adult form: name, phone (primary identifier), optional email; then required structured address (DRC city, commune, quartier, avenue and number) |
 | Access | PIN creation + confirmation, salted-hash local storage, in-app unlock |
-| Submission | Review screen, local submission, local request ID, confirmation screen |
-| Client dashboard | Request status hub, children + needs, next step, proposal, contract, invoice, payment, tutor |
+| Submission | Review screen, local submission, local request ID, top success toast and direct dashboard navigation |
+| Client dashboard | Request status hub, child + needs, next step, proposal, contract, invoice, payment, tutor |
 | Proposal | Admin builder, client view, accept / reject |
 | Contract | Admin preparation, client view, simulated electronic signature |
 | Invoice | Admin creation with unique number, client view, status |
@@ -234,14 +238,16 @@ Admin dashboard (incoming requests)
 
 The prototype succeeds when:
 
-1. **A complete journey is possible end to end**, with no dead ends: request → proposal → contract
-   → invoice → declaration → verification → receipt → tutor assigned → service started.
+1. **The adult journey is possible end to end**, with no dead ends: request → proposal → contract
+   → invoice → declaration → verification → receipt → tutor assigned → service started. The parent
+   journey currently completes request submission and dashboard routing; child proposal preparation
+   is deferred under R-41 because the approved client flow creates no `LearningNeed` records.
 2. **Every state is reachable and observable** — each status in `context/business-rules.md` can be
    reached, is displayed with a consistent label, and has a defined next step.
 3. **Data survives an app restart** — the request, its status, the proposal, the payment and the
    receipt are all restored exactly.
-4. **The multi-entity model works** — one request with two children and three needs, two different
-   tutors assigned to two different needs, one tutor assigned to two needs, all rendered correctly.
+4. **The multi-entity model works** — a parent can create separate requests for different children;
+   adult requests carry one or more request-scoped needs, and tutor assignment remains per need.
 5. **The journey is completable on a small screen** (e.g. 360×640 dp) and is operable by a user
    who has never used the app before.
 6. **Both languages are complete** for every client-facing string; switching language changes all
@@ -265,9 +271,9 @@ be violated during implementation:
 |---|---|
 | BR-01 | The phone number is the primary client identifier and is unique per client. |
 | BR-02 | A client may have many requests over time; a request belongs to exactly one client. |
-| BR-03 | A request contains one or more children (parent journey) **or** belongs to the client as the learner (adult journey). It never contains both. |
+| BR-03 | A parent request contains exactly one child **or** an adult request belongs to the client as the learner. It never contains both. |
 | BR-04 | A child belongs to a client profile and may be referenced by several requests. |
-| BR-05 | A learning need belongs to exactly one request and references either a child or the client as learner. |
+| BR-05 | A `LearningNeed` belongs to one request. Adult requests create at least one; child onboarding submits learning context without creating client-side `LearningNeed` records. |
 | BR-06 | One child may have several needs; a need may be covered by one proposal; a proposal may cover several needs. |
 | BR-07 | Tutor assignment is **per need**. Multiple tutors per child and one tutor per several needs are both supported. |
 | BR-08 | A client preference to reuse the same tutor is a preference, never a guarantee. |

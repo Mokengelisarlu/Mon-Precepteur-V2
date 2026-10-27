@@ -1,3 +1,5 @@
+import type { ChildOnboardingData } from '@/features/children';
+
 export type JourneyType = 'child' | 'self';
 
 export type RequestStatus =
@@ -56,7 +58,7 @@ interface RequestRecordBase {
   readonly id: string;
   readonly reference: string;
   readonly clientId: string;
-  readonly needIds: readonly [string, ...string[]];
+  readonly needIds: readonly string[];
   readonly tutorPreference: TutorPreference;
   readonly status: RequestStatus;
   readonly createdAt: number;
@@ -66,7 +68,8 @@ interface RequestRecordBase {
 
 export interface ChildRequestRecord extends RequestRecordBase {
   readonly type: 'child';
-  readonly childIds: readonly [string, ...string[]];
+  readonly childIds: readonly [string];
+  readonly learningContext: ChildOnboardingData;
 }
 
 export interface AdultRequestRecord extends RequestRecordBase {
@@ -86,26 +89,15 @@ export interface ActivityEvent {
   readonly createdAt: number;
 }
 
-type LearningNeedDraftFields = Omit<
+export type AdultLearningNeedDraft = Omit<
   LearningNeed,
   'requestId' | 'childId' | 'learnerIsClient'
->;
-
-export type ChildLearningNeedDraft = LearningNeedDraftFields & {
-  readonly childId: string;
-  readonly learnerIsClient: false;
-};
-
-export type AdultLearningNeedDraft = LearningNeedDraftFields & {
+> & {
   readonly childId?: never;
   readonly learnerIsClient: true;
 };
 
-export type LearningNeedDraft = ChildLearningNeedDraft | AdultLearningNeedDraft;
-
-export type NeedDraftOwner =
-  | { readonly type: 'child'; readonly childId: string }
-  | { readonly type: 'self' };
+export type LearningNeedDraft = AdultLearningNeedDraft;
 
 export interface NeedFormValues {
   subject: string;

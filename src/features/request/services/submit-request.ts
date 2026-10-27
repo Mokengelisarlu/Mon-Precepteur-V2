@@ -3,6 +3,7 @@ import {
   childDraftToRecord,
   childFormSchema,
   type ChildDraftRecord,
+  type ChildOnboardingData,
   type ChildRecord,
 } from '@/features/children';
 import { contactFormSchema, type ClientContactDetails, type ClientProfile } from '@/features/client';
@@ -14,7 +15,6 @@ import { needFormSchema } from '../validation';
 import type {
   ActivityEvent,
   AdultLearningNeedDraft,
-  ChildLearningNeedDraft,
   JourneyType,
   LearningNeed,
   LearningNeedDraft,
@@ -28,7 +28,7 @@ export interface RequestDraftData {
   readonly contact: ClientContactDetails | null;
   readonly clientId: string | null;
   readonly children: readonly ChildDraftRecord[];
-  readonly needsByChildId: Readonly<Record<string, readonly ChildLearningNeedDraft[]>>;
+  readonly onboardingByChildId: Readonly<Record<string, ChildOnboardingData>>;
   readonly selfNeeds: readonly AdultLearningNeedDraft[];
   readonly tutorPreference: TutorPreference;
 }
@@ -90,7 +90,11 @@ function contactIsValid(contact: ClientContactDetails): boolean {
     lastName: contact.lastName,
     phone: contact.phone,
     email: contact.email ?? '',
-    address: contact.address ?? '',
+    city: contact.city ?? '',
+    commune: contact.commune ?? '',
+    quartier: contact.quartier ?? '',
+    avenue: contact.avenue ?? '',
+    number: contact.number ?? '',
   }).success;
 }
 
@@ -121,53 +125,40 @@ export function submitRequest(input: SubmitRequestInput): SubmitRequestResult {
     return failure('review.error.pin');
   }
 
-  const childIds = draft.children.map((child) => child.id);
-  if (new Set(childIds).size !== childIds.length) {
-    return failure('review.error.invalid');
-  }
-
   let children: readonly ChildRecord[] = [];
-  let needDrafts: readonly LearningNeedDraft[];
+  let needs: readonly LearningNeed[] = [];
+  let learningContext: ChildOnboardingData | null = null;
 
   if (draft.journeyType === 'child') {
     if (draft.children.length === 0) {
       return failure('review.error.noChildren');
     }
+    if (draft.children.length !== 1) {
+      return failure('review.error.invalid');
+    }
+    const child = draft.children[0];
+    if (child === undefined) {
+      return failure('review.error.noChildren');
+    }
     if (draft.selfNeeds.length > 0) {
       return failure('review.error.invalid');
     }
-    if (Object.keys(draft.needsByChildId).some((childId) => !childIds.includes(childId))) {
-      return failure('review.error.invalid');
-    }
-
-    for (const child of draft.children) {
-      if (!childFormSchema.safeParse(childDraftToFormValues(child)).success) {
-        return failure('review.error.invalid');
-      }
-      const childNeeds = draft.needsByChildId[child.id] ?? [];
-      if (childNeeds.length === 0) {
-        return failure('review.error.noNeeds');
-      }
-      if (childNeeds.some((need) => need.childId !== child.id || !needIsValid(need))) {
-        return failure('review.error.invalid');
-      }
-    }
-
-    needDrafts = draft.children.flatMap((child) => draft.needsByChildId[child.id] ?? []);
     if (
-      needDrafts.some(
-        (need) =>
-          need.learnerIsClient ||
-          need.childId === undefined ||
-          !childIds.includes(need.childId) ||
-          !needIsValid(need),
-      )
+      Object.keys(draft.onboardingByChildId).some((childId) => childId !== child.id)
     ) {
       return failure('review.error.invalid');
     }
-    children = draft.children.map((child) => childDraftToRecord(child, clientId));
+
+    if (!childFormSchema.safeParse(childDraftToFormValues(child)).success) {
+      return failure('review.error.invalid');
+    }
+    learningContext = draft.onboardingByChildId[child.id] ?? null;
+    if (learningContext === null) {
+      return failure('review.error.invalid');
+    }
+    children = [childDraftToRecord(child, clientId)];
   } else {
-    if (draft.children.length > 0 || Object.keys(draft.needsByChildId).length > 0) {
+    if (draft.children.length > 0 || Object.keys(draft.onboardingByChildId).length > 0) {
       return failure('review.error.invalid');
     }
     if (draft.selfNeeds.length === 0) {
@@ -180,15 +171,17 @@ export function submitRequest(input: SubmitRequestInput): SubmitRequestResult {
     ) {
       return failure('review.error.invalid');
     }
-    needDrafts = draft.selfNeeds;
-  }
-
-  const nonEmptyNeedIds = asNonEmpty(needDrafts.map((need) => need.id));
-  if (nonEmptyNeedIds === null) {
-    return failure('review.error.noNeeds');
-  }
-  if (new Set(nonEmptyNeedIds).size !== nonEmptyNeedIds.length) {
-    return failure('review.error.invalid');
+    const nonEmptyNeedIds = asNonEmpty(draft.selfNeeds.map((need) => need.id));
+    if (nonEmptyNeedIds === null) {
+      return failure('review.error.noNeeds');
+    }
+    if (new Set(nonEmptyNeedIds).size !== nonEmptyNeedIds.length) {
+      return failure('review.error.invalid');
+    }
+    needs = draft.selfNeeds.map((need) => ({
+      ...need,
+      requestId: ids.requestId,
+    }));
   }
 
   const year = new Date(now).getFullYear();
@@ -200,8 +193,7 @@ export function submitRequest(input: SubmitRequestInput): SubmitRequestResult {
     id: ids.requestId,
     reference,
     clientId,
-    needIds: nonEmptyNeedIds,
-    tutorPreference: draft.tutorPreference,
+    tutorPreference: draft.journeyType === 'child' ? 'none' : draft.tutorPreference,
     status: 'received' as const,
     createdAt: now,
     updatedAt: now,
@@ -210,19 +202,28 @@ export function submitRequest(input: SubmitRequestInput): SubmitRequestResult {
 
   let request: RequestRecord;
   if (draft.journeyType === 'child') {
-    const nonEmptyChildIds = asNonEmpty(childIds);
-    if (nonEmptyChildIds === null) {
+    const child = draft.children[0];
+    if (child === undefined) {
       return failure('review.error.noChildren');
     }
-    request = { ...commonRequestFields, type: 'child', childIds: nonEmptyChildIds };
+    if (learningContext === null) {
+      return failure('review.error.invalid');
+    }
+    request = {
+      ...commonRequestFields,
+      type: 'child',
+      childIds: [child.id],
+      needIds: [],
+      learningContext,
+    };
   } else {
-    request = { ...commonRequestFields, type: 'self', childIds: [] };
+    const needIds = asNonEmpty(needs.map((need) => need.id));
+    if (needIds === null) {
+      return failure('review.error.noNeeds');
+    }
+    request = { ...commonRequestFields, type: 'self', childIds: [], needIds };
   }
 
-  const needs = needDrafts.map((need) => ({
-    ...need,
-    requestId: request.id,
-  }));
   const activityEvent: ActivityEvent = {
     id: ids.eventId,
     requestId: request.id,

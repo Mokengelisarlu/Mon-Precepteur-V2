@@ -55,6 +55,12 @@ postponed).
 | R-33 | Learning-need frequency is stored as a selected cadence option | Decision | No | — | Accepted (S08) |
 | R-34 | Contact phone values use canonical `+243` storage | Assumption | No | — | Proposed (S10) |
 | R-35 | Existing client PINs are verified rather than replaced during request continuation | Decision | **Yes** | S11 | Accepted (2026-10-23) |
+| R-36 | Use the brand logo on the native splash screen | Decision | No | — | Accepted (2026-10-24) |
+| R-37 | Default language is French regardless of device locale | Decision | No | — | Accepted (2026-10-24) |
+| R-38 | One child is collected per parent request | Decision | No | — | Accepted |
+| R-39 | Child learning context is submitted on the request without creating child needs | Decision | No | — | Accepted |
+| R-40 | Contact city options are a curated, non-exhaustive DRC list | Assumption | No | — | Proposed |
+| R-41 | Admin proposal preparation for child requests without needs | Decision | **Yes** | S16 (child requests) | Deferred |
 
 ---
 
@@ -76,8 +82,8 @@ postponed).
 ### R-02 — Learning needs are request-scoped; children are profile-scoped
 
 - **Description:** Does a learning need belong to the child (reusable) or to the request
-  (one-off)? The brief says one child has many needs and one request has many children, without
-  saying which entity owns a need.
+  (one-off)? The original brief did not say which entity owns a need or whether a request could
+  include multiple children.
 - **Impact:** Determines whether re-submitting a similar need duplicates it, and whether the
   proposal → contract → invoice → assignment chain resolves to a request or to a child.
 - **Proposed decision:** `Child` is **profile-scoped** (a parent registers children once and reuses
@@ -600,6 +606,39 @@ postponed).
   replacement path.
 - **Status:** Accepted.
 
+### R-36 — Use the brand logo on the native splash screen
+
+- **Description:** The SDK 57 splash configuration used the legacy `splash-icon.png`, while the
+  supplied `mon-precepteur-logo.png` is the current in-app brand lock-up.
+- **Decision (2026-10-24, maintainer-approved):** Configure `expo-splash-screen` to render
+  `assets/mon-precepteur-logo.png`, retaining the existing splash background colour and `contain`
+  resize mode.
+- **Impact:** The app's native launch screen now uses the same logo as the Welcome screen. The
+  legacy splash asset remains in the repository but is no longer selected by the plugin.
+- **Approval required:** No — explicitly requested by the maintainer.
+- **Status:** Accepted.
+
+### R-37 — French is the initial language
+
+- **Description:** The previous locale resolver selected English automatically when the device
+  language was English, even though French is the product's primary language.
+- **Decision (2026-10-24, maintainer-approved):** A new session starts in French regardless of
+  device locale. English remains available through an explicit locale override; unsupported
+  overrides fall back to French.
+- **Impact:** The initial UI is consistently French, while users can still choose English.
+- **Approval required:** No — explicitly requested by the maintainer.
+- **Status:** Accepted.
+
+### R-38 — One child per parent request
+
+- **Decision (maintainer-approved):** The initial parent journey registers exactly one child per
+  request. Other children may be added to the client profile from the dashboard and start separate
+  requests; dashboard child management remains in S13 and is not part of the S07 follow-up.
+- **Impact:** A parent request references exactly one child. The child form is a full-screen route;
+  the multi-child list is removed from initial onboarding.
+- **Approval required:** No — explicitly confirmed by the maintainer for the S07 follow-up.
+- **Status:** Accepted.
+
 ---
 
 
@@ -621,9 +660,48 @@ small enough to answer in one line.
 | Q11 | Is the legal wording of the contract, and the consent flow for children's data, scheduled? | To be scheduled by the legal owner (R-08, R-12) | Production |
 | Q12 | Are the six toolchain packages added in S01 and the two npm `overrides` accepted? | Yes (R-23) | — |
 | Q13 | Is the administrator's route tree built as a URL segment (`app/admin/`) instead of an `(admin)` group? | Yes (R-26) | — |
+| Q14 | How should administrators prepare proposals for child requests that have learning context but no `LearningNeed` records? | Keep proposal preparation deferred until a separate admin/data-model decision; do not generate needs from onboarding answers (R-41) | S16 (child requests) |
 
 **None of these blocks the start of implementation.** S01 (project foundation) and S02 (tokens) are
 complete; Q7 was confirmed during S02, and R-13 is now accepted. Q12 does not block anything: the
 deviations are already installed and verified, and a later answer can trigger a re-pin. Q13 was
 raised by S04: the administrator's tree is a URL segment, so the `/admin/...` URLs of architecture
 §3.2 are produced as specified; a confirmation is requested but nothing is blocked.
+
+### R-39 — Child requests preserve learning context without client-created needs
+
+- **Decision (maintainer-approved):** The child onboarding answers are retained as
+  `RequestRecord.learningContext`. Submitting a parent request creates no `LearningNeed` records;
+  adult requests continue to create at least one need. The parent address is captured on the
+  client's profile in Contact.
+- **Impact:** The request model now permits a submitted child request with `needIds: []`. The
+  existing proposal model still requires one or more needs, so context-only child requests cannot
+  use the current proposal workflow; see R-41.
+- **Status:** Accepted.
+
+### R-40 — Curated DRC city options in Contact
+
+- **Assumption:** Contact uses a curated local list of DRC cities, defaults to Lubumbashi, and
+  leaves commune, quartier, avenue and number as required text fields. The list is not an
+  authoritative or exhaustive geographic directory.
+- **Impact:** A city absent from the current list cannot be selected until the list is updated.
+  Production should use a verified directory or a suitable searchable data source.
+- **Approval required:** No for this local prototype; confirm before treating the list as complete
+  or using it as official reference data.
+- **Status:** Proposed.
+
+### R-41 — Admin proposals for child requests without needs
+
+- **Description:** The approved child client flow submits onboarding context and no `LearningNeed`
+  records, while the existing proposal model requires at least one need.
+- **Decision for the current prototype:** Do not create synthetic needs from the onboarding
+  answers and do not change the proposal/contract/invoice data model as an implicit workaround.
+  Child proposal preparation is deferred; the current request can be received and reviewed but
+  cannot proceed through the existing need-based proposal flow.
+- **Impact:** The parent request journey currently completes through submission and dashboard
+  routing only. The admin workflow for context-only child requests requires a separate business and
+  data-model decision.
+- **Approval required:** Yes, before implementing child proposal preparation.
+- **Blocks implementation:** S16 for child requests only; adult proposal work remains governed by
+  the existing needs model.
+- **Status:** Deferred.

@@ -3,16 +3,26 @@ import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Badge, Button, Card, ErrorState, KeyValue, Stepper } from '@/components/ui';
-import { ageFromBirthYear } from '@/features/children';
-import type { ChildDraftRecord } from '@/features/children';
+import {
+  ageFromBirthYear,
+  choiceLabel,
+  DAY_OPTIONS,
+  ESTIMATED_LEVEL_OPTIONS,
+  FREQUENCY_OPTIONS,
+  GOAL_OPTIONS,
+  GRADE_OPTIONS,
+  SLOT_OPTIONS,
+  SUBJECT_OPTIONS,
+} from '@/features/children';
+import type { ChildDraftRecord, ChildOnboardingData } from '@/features/children';
 import type { ClientContactDetails } from '@/features/client';
+import { formatDate } from '@/lib/format';
 import { useTranslation } from '@/hooks/use-translation';
 import type { TranslationKey } from '@/lib/i18n/types';
 
 import { NEED_FORMAT_LABEL_KEYS, NEED_FREQUENCY_LABEL_KEYS, TUTOR_PREFERENCE_LABEL_KEYS } from '../lib/need-labels';
 import type {
   AdultLearningNeedDraft,
-  ChildLearningNeedDraft,
   JourneyType,
   TutorPreference,
 } from '../types';
@@ -20,14 +30,13 @@ import type {
 export interface ReviewScreenProps {
   readonly journeyType: JourneyType;
   readonly childDrafts: readonly ChildDraftRecord[];
-  readonly needsByChildId: Readonly<Record<string, readonly ChildLearningNeedDraft[]>>;
+  readonly onboardingByChildId: Readonly<Record<string, ChildOnboardingData>>;
   readonly selfNeeds: readonly AdultLearningNeedDraft[];
   readonly contact: ClientContactDetails;
   readonly tutorPreference: TutorPreference;
   readonly errorMessage: TranslationKey | null;
   readonly isSubmitting: boolean;
-  readonly onEditChildren: () => void;
-  readonly onEditNeedsForChild: (childId: string) => void;
+  readonly onEditChild: () => void;
   readonly onEditSelfNeeds: () => void;
   readonly onEditLearner: () => void;
   readonly onEditContact: () => void;
@@ -54,7 +63,7 @@ function EditAction({ label, accessibilityLabel, onPress }: EditActionProps): Re
 }
 
 interface NeedSummaryProps {
-  readonly need: ChildLearningNeedDraft | AdultLearningNeedDraft;
+  readonly need: AdultLearningNeedDraft;
 }
 
 function NeedSummary({ need }: NeedSummaryProps): React.JSX.Element {
@@ -85,8 +94,18 @@ function NeedSummary({ need }: NeedSummaryProps): React.JSX.Element {
   );
 }
 
-function ChildSummary({ child }: { readonly child: ChildDraftRecord }): React.JSX.Element {
-  const { t } = useTranslation();
+function ChildSummary({
+  child,
+  learningContext,
+}: {
+  readonly child: ChildDraftRecord;
+  readonly learningContext: ChildOnboardingData | undefined;
+}): React.JSX.Element {
+  const { t, locale } = useTranslation();
+  const translatedList = (
+    values: readonly string[],
+    choices: Parameters<typeof choiceLabel>[0],
+  ): string => values.map((value) => choiceLabel(choices, value, t)).join(', ');
 
   return (
     <View className="gap-xs" testID={`review-child-${child.id}`}>
@@ -106,6 +125,59 @@ function ChildSummary({ child }: { readonly child: ChildDraftRecord }): React.JS
         <KeyValue label={t('child.school')} value={child.school} />
       )}
       {child.notes === undefined ? null : <KeyValue label={t('child.notes')} value={child.notes} />}
+      {learningContext === undefined ? null : (
+        <View className="gap-xs border-t border-outline-variant pt-s">
+          <Text accessibilityRole="header" className="text-title-small text-on-surface">
+            {t('review.learningContext')}
+          </Text>
+          <KeyValue
+            label={t('onboarding.grade')}
+            value={choiceLabel(GRADE_OPTIONS, learningContext.grade, t)}
+          />
+          <KeyValue
+            label={t('onboarding.estimatedLevel')}
+            value={choiceLabel(ESTIMATED_LEVEL_OPTIONS, learningContext.estimatedLevel, t)}
+          />
+          <KeyValue
+            label={t('onboarding.subjects')}
+            value={[
+              ...learningContext.subjects.map((subject) =>
+                choiceLabel(SUBJECT_OPTIONS, subject, t),
+              ),
+              learningContext.otherSubject,
+            ]
+              .filter(Boolean)
+              .join(', ')}
+          />
+          {learningContext.goals.length === 0 ? null : (
+            <KeyValue
+              label={t('onboarding.goals')}
+              value={translatedList(learningContext.goals, GOAL_OPTIONS)}
+            />
+          )}
+          {learningContext.startDate.length === 0 ? null : (
+            <KeyValue
+              label={t('onboarding.startDate')}
+              value={formatDate(learningContext.startDate, locale)}
+            />
+          )}
+          <KeyValue
+            label={t('onboarding.frequency')}
+            value={choiceLabel(FREQUENCY_OPTIONS, learningContext.frequency, t)}
+          />
+          <KeyValue
+            label={t('onboarding.days')}
+            value={translatedList(learningContext.days, DAY_OPTIONS)}
+          />
+          <KeyValue
+            label={t('onboarding.slots')}
+            value={translatedList(learningContext.slots, SLOT_OPTIONS)}
+          />
+          {learningContext.notes.trim().length === 0 ? null : (
+            <KeyValue label={t('onboarding.notes')} value={learningContext.notes} />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -113,14 +185,13 @@ function ChildSummary({ child }: { readonly child: ChildDraftRecord }): React.JS
 export function ReviewScreen({
   journeyType,
   childDrafts,
-  needsByChildId,
+  onboardingByChildId,
   selfNeeds,
   contact,
   tutorPreference,
   errorMessage,
   isSubmitting,
-  onEditChildren,
-  onEditNeedsForChild,
+  onEditChild,
   onEditSelfNeeds,
   onEditLearner,
   onEditContact,
@@ -131,8 +202,7 @@ export function ReviewScreen({
   const steps =
     journeyType === 'child'
       ? [
-          t('nav.children'),
-          t('children.stepNeeds'),
+          t('nav.childForm'),
           t('children.stepContact'),
           t('nav.pin'),
           t('children.stepReview'),
@@ -159,18 +229,22 @@ export function ReviewScreen({
         <Card testID="review-people-section">
           <View className="gap-s">
             <Text accessibilityRole="header" className="text-title-medium text-on-surface">
-              {t(journeyType === 'child' ? 'review.children' : 'review.learner')}
+              {t(journeyType === 'child' ? 'review.child' : 'review.learner')}
             </Text>
             <Badge label={t(journeyType === 'child' ? 'requestType.child' : 'requestType.self')} />
             {journeyType === 'child' ? (
               <>
                 {childDrafts.map((child) => (
-                  <ChildSummary key={child.id} child={child} />
+                  <ChildSummary
+                    key={child.id}
+                    child={child}
+                    learningContext={onboardingByChildId[child.id]}
+                  />
                 ))}
                 <EditAction
                   label={t('review.edit')}
-                  accessibilityLabel={t('review.editChildren')}
-                  onPress={onEditChildren}
+                  accessibilityLabel={t('review.editChild')}
+                  onPress={onEditChild}
                 />
               </>
             ) : (
@@ -187,39 +261,21 @@ export function ReviewScreen({
           </View>
         </Card>
 
+        {journeyType === 'self' ? (
         <Card testID="review-needs-section">
           <View className="gap-s">
             <Text accessibilityRole="header" className="text-title-medium text-on-surface">
               {t('review.needs')}
             </Text>
-            {journeyType === 'child'
-              ? childDrafts.map((child) => (
-                  <View key={child.id} className="gap-s">
-                    <Text accessibilityRole="header" className="text-title-small text-on-surface">
-                      {child.firstName}
-                    </Text>
-                    {(needsByChildId[child.id] ?? []).map((need) => (
-                      <NeedSummary key={need.id} need={need} />
-                    ))}
-                    <EditAction
-                      label={t('review.edit')}
-                      accessibilityLabel={t('review.editNeedsFor', { name: child.firstName })}
-                      onPress={() => onEditNeedsForChild(child.id)}
-                    />
-                  </View>
-                ))
-              : (
-                  <>
-                    {selfNeeds.map((need) => <NeedSummary key={need.id} need={need} />)}
-                    <EditAction
-                      label={t('review.edit')}
-                      accessibilityLabel={t('review.editNeeds')}
-                      onPress={onEditSelfNeeds}
-                    />
-                  </>
-                )}
+            {selfNeeds.map((need) => <NeedSummary key={need.id} need={need} />)}
+            <EditAction
+              label={t('review.edit')}
+              accessibilityLabel={t('review.editNeeds')}
+              onPress={onEditSelfNeeds}
+            />
           </View>
         </Card>
+        ) : null}
 
         <Card testID="review-contact-section">
           <View className="gap-s">
@@ -233,7 +289,7 @@ export function ReviewScreen({
               <KeyValue label={t('contact.emailOptional')} value={contact.email} />
             )}
             {contact.address === undefined ? null : (
-              <KeyValue label={t('contact.addressOptional')} value={contact.address} />
+              <KeyValue label={t('contact.fullAddress')} value={contact.address} />
             )}
             <EditAction
               label={t('review.edit')}
@@ -243,6 +299,7 @@ export function ReviewScreen({
           </View>
         </Card>
 
+        {journeyType === 'self' ? (
         <Card testID="review-tutor-preference-section">
           <View className="gap-s">
             <Text accessibilityRole="header" className="text-title-medium text-on-surface">
@@ -261,6 +318,7 @@ export function ReviewScreen({
             />
           </View>
         </Card>
+        ) : null}
 
         {errorMessage === null ? null : (
           <ErrorState

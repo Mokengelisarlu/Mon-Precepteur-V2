@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import type { ChildDraftRecord } from '@/features/children';
+import type { ChildDraftRecord, ChildOnboardingData } from '@/features/children';
 import type { ClientContactDetails } from '@/features/client';
-import type { AdultLearningNeedDraft, ChildLearningNeedDraft } from '@/features/request/types';
+import type { AdultLearningNeedDraft } from '@/features/request/types';
 import { useSessionStore } from '@/store/session-store';
 
 import { ReviewScreen } from '../screens/review-screen';
@@ -13,6 +13,11 @@ const contact: ClientContactDetails = {
   phone: '+243812345678',
   email: 'amina@example.com',
   address: 'Gombe, Kinshasa',
+  city: 'Kinshasa',
+  commune: 'Gombe',
+  quartier: 'Centre',
+  avenue: 'Avenue de la Paix',
+  number: '12',
 };
 
 const child: ChildDraftRecord = {
@@ -27,21 +32,22 @@ const child: ChildDraftRecord = {
   updatedAt: 1,
 };
 
-const childNeed: ChildLearningNeedDraft = {
-  id: 'ned_review',
-  childId: child.id,
-  learnerIsClient: false,
-  subject: 'Mathematics',
-  level: 'P4',
-  objective: 'Build confidence with fractions',
-  frequency: 'weekly_2',
-  sessionMinutes: 45,
-  availability: 'Tuesday evenings',
-  format: 'home',
-  location: 'Gombe, Kinshasa',
-  notes: 'Bring practice worksheets',
-  createdAt: 1,
-  updatedAt: 1,
+const learningContext: ChildOnboardingData = {
+  firstName: 'Junior',
+  lastName: 'Kabila',
+  birthYear: '2016',
+  gender: 'boy',
+  grade: 'p4',
+  school: 'École du Centre',
+  estimatedLevel: 'satisfactory',
+  subjects: ['mathematics'],
+  otherSubject: '',
+  goals: ['homework'],
+  notes: 'Needs a quiet study space',
+  startDate: '2026-06-01',
+  frequency: 'weekly_3',
+  days: ['mon', 'tue', 'wed'],
+  slots: ['evening'],
 };
 
 const adultNeed: AdultLearningNeedDraft = {
@@ -65,14 +71,13 @@ function createProps(
   return {
     journeyType,
     childDrafts: journeyType === 'child' ? [child] : [],
-    needsByChildId: journeyType === 'child' ? { [child.id]: [childNeed] } : {},
+    onboardingByChildId: journeyType === 'child' ? { [child.id]: learningContext } : {},
     selfNeeds: journeyType === 'self' ? [adultNeed] : [],
     contact,
     tutorPreference: journeyType === 'child' ? 'same' as const : 'none' as const,
     errorMessage: null,
     isSubmitting: false,
-    onEditChildren: jest.fn(),
-    onEditNeedsForChild: jest.fn(),
+    onEditChild: jest.fn(),
     onEditSelfNeeds: jest.fn(),
     onEditLearner: jest.fn(),
     onEditContact: jest.fn(),
@@ -94,14 +99,17 @@ describe('ReviewScreen', () => {
     expect(screen.getByText('2016')).toBeTruthy();
     expect(screen.getByText('Estimated age: 10')).toBeTruthy();
     expect(screen.getByText('École du Centre')).toBeTruthy();
-    expect(screen.getByText('Needs a quiet study space')).toBeTruthy();
-    expect(screen.getByText('Build confidence with fractions')).toBeTruthy();
-    expect(screen.getByText('45 minutes')).toBeTruthy();
-    expect(screen.getByText('Tuesday evenings')).toBeTruthy();
-    expect(screen.getByText('Bring practice worksheets')).toBeTruthy();
+    expect(screen.getAllByText('Needs a quiet study space').length).toBeGreaterThan(0);
+    expect(screen.getByText('Learning information')).toBeTruthy();
+    expect(screen.getByText('Mathematics')).toBeTruthy();
+    expect(screen.getByText('Homework help')).toBeTruthy();
+    expect(screen.getByText('3 sessions / week')).toBeTruthy();
+    expect(screen.getByText('Mon, Tue, Wed')).toBeTruthy();
+    expect(screen.getByText('Evening')).toBeTruthy();
     expect(screen.getByText('amina@example.com')).toBeTruthy();
     expect(screen.getAllByText('Gombe, Kinshasa').length).toBeGreaterThan(0);
-    expect(screen.getByText('Same tutor if possible')).toBeTruthy();
+    expect(screen.queryByTestId('review-needs-section')).toBeNull();
+    expect(screen.queryByTestId('review-tutor-preference-section')).toBeNull();
   });
 
   it('shows the adult learner and their needs without child details', async () => {

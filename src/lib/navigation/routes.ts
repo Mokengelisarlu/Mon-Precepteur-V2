@@ -3,7 +3,6 @@ export type ClientRoute =
   | '/login'
   | '/request-type'
   | '/children'
-  | '/children/form'
   | '/needs/child/[childId]'
   | '/needs/self'
   | '/contact'
@@ -35,8 +34,7 @@ export const routes = {
   login: '/login' as const,
   requestType: '/request-type' as const,
   children: '/children' as const,
-  childForm: '/children/form' as const,
-  childFormFor: (childId: string) => `/children/form?childId=${childId}` as const,
+  childrenFor: (childId: string) => `/children?childId=${childId}` as const,
   needsForChild: (childId: string) => `/needs/child/${childId}` as const,
   needsSelf: '/needs/self' as const,
   contact: '/contact' as const,

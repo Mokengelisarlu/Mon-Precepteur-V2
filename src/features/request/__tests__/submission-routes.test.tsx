@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ToastHost } from '@/components/feedback/ToastHost';
 
-import type { ChildDraftRecord } from '@/features/children';
+import type { ChildDraftRecord, ChildOnboardingData } from '@/features/children';
 import type { ClientProfile } from '@/features/client';
-import type { ChildLearningNeedDraft } from '@/features/request/types';
 
 import ReviewRoute from '../../../../app/(client)/review';
 import { useActivityStore } from '@/store/activity-store';
@@ -36,6 +37,12 @@ const client: ClientProfile = {
   firstName: 'Amina',
   lastName: 'Kabila',
   phone: '+243812345678',
+  city: 'Lubumbashi',
+  commune: 'Kampemba',
+  quartier: 'Bel-Air',
+  avenue: 'Avenue Lumumba',
+  number: '12B',
+  address: '12B, Avenue Lumumba, Bel-Air, Kampemba, Lubumbashi',
   pinHash: 'hashed-pin',
   pinSalt: 'random-salt',
   createdAt: 1,
@@ -51,19 +58,22 @@ const child: ChildDraftRecord = {
   updatedAt: 1,
 };
 
-const childNeed: ChildLearningNeedDraft = {
-  id: 'ned_route',
-  childId: child.id,
-  learnerIsClient: false,
-  subject: 'Mathematics',
-  level: 'P4',
-  objective: 'Build confidence with fractions',
-  frequency: 'weekly_2',
-  sessionMinutes: 45,
-  availability: 'Tuesday evenings',
-  format: 'online',
-  createdAt: 1,
-  updatedAt: 1,
+const learningContext: ChildOnboardingData = {
+  firstName: 'Junior',
+  lastName: '',
+  birthYear: '2016',
+  gender: 'boy',
+  grade: 'p4',
+  school: '',
+  estimatedLevel: 'satisfactory',
+  subjects: ['mathematics'],
+  otherSubject: '',
+  goals: ['homework'],
+  notes: '',
+  startDate: '2026-05-08',
+  frequency: 'weekly_3',
+  days: ['mon', 'tue', 'wed'],
+  slots: ['evening'],
 };
 
 function prepareStores(): void {
@@ -74,10 +84,16 @@ function prepareStores(): void {
       firstName: 'Amina',
       lastName: 'Kabila',
       phone: '+243812345678',
+      city: 'Lubumbashi',
+      commune: 'Kampemba',
+      quartier: 'Bel-Air',
+      avenue: 'Avenue Lumumba',
+      number: '12B',
+      address: '12B, Avenue Lumumba, Bel-Air, Kampemba, Lubumbashi',
     },
     clientId: client.id,
     children: [child],
-    needsByChildId: { [child.id]: [childNeed] },
+    onboardingByChildId: { [child.id]: learningContext },
     selfNeeds: [],
     tutorPreference: 'same',
   });
@@ -99,13 +115,24 @@ describe('request submission routes', () => {
     useNotificationStore.setState({ notifications: [] });
   });
 
-  it('submits the parent draft, clears it, and shows the stored reference', async () => {
+  it('submits the parent draft without need records, clears it, and shows a success toast', async () => {
     prepareStores();
 
-    const reviewRoute = await render(<ReviewRoute />);
+    const reviewRoute = await render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 390, height: 844 },
+          insets: { top: 24, right: 0, bottom: 0, left: 0 },
+        }}
+      >
+        <ToastHost>
+          <ReviewRoute />
+        </ToastHost>
+      </SafeAreaProvider>,
+    );
     expect(screen.getAllByText('Junior').length).toBeGreaterThan(0);
     expect(screen.getByText('2016')).toBeTruthy();
-    expect(screen.getByText('Build confidence with fractions')).toBeTruthy();
+    expect(screen.getByText('Mathematics')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('review-submit'));
 
@@ -114,9 +141,12 @@ describe('request submission routes', () => {
       id: 'req_uuid-1',
       reference: expect.stringMatching(/^MP-\d{4}-0001$/),
       status: 'received',
+      type: 'child',
+      needIds: [],
+      learningContext,
     });
     expect(useChildStore.getState().children).toHaveLength(1);
-    expect(useDomainStore.getState().needs[0]?.requestId).toBe('req_uuid-1');
+    expect(useDomainStore.getState().needs).toEqual([]);
     expect(useActivityStore.getState().events).toHaveLength(1);
     expect(useNotificationStore.getState().notifications).toHaveLength(1);
     expect(useRequestDraftStore.getState()).toMatchObject({
@@ -124,13 +154,11 @@ describe('request submission routes', () => {
       contact: null,
       clientId: null,
       children: [],
-      needsByChildId: {},
+      onboardingByChildId: {},
       selfNeeds: [],
     });
-    expect(mockRedirect).toHaveBeenCalledWith({
-      pathname: '/submitted',
-      params: { requestId: 'req_uuid-1' },
-    });
+    expect(mockReplace).toHaveBeenCalledWith('/dashboard');
+    expect(screen.getByText('Your request has been submitted successfully.')).toBeTruthy();
 
     reviewRoute.unmount();
   });

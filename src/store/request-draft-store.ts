@@ -2,20 +2,16 @@ import { create } from 'zustand';
 
 import {
   removeChildDraft,
-  upsertChildDraft,
 } from '@/features/children/services/child-draft';
-import type { ChildDraftRecord } from '@/features/children/types';
+import type { ChildDraftRecord, ChildOnboardingData } from '@/features/children/types';
 import type { ClientContactDetails } from '@/features/client/types';
 import {
-  removeChildNeedDrafts,
   removeNeedDraft,
   upsertNeedDraft,
 } from '@/features/request/services/need-draft';
 import type {
   AdultLearningNeedDraft,
-  ChildLearningNeedDraft,
   JourneyType,
-  LearningNeedDraft,
   TutorPreference,
 } from '@/features/request/types';
 
@@ -24,7 +20,7 @@ export interface RequestDraftState {
   contact: ClientContactDetails | null;
   clientId: string | null;
   children: readonly ChildDraftRecord[];
-  needsByChildId: Readonly<Record<string, readonly ChildLearningNeedDraft[]>>;
+  onboardingByChildId: Readonly<Record<string, ChildOnboardingData>>;
   selfNeeds: readonly AdultLearningNeedDraft[];
   tutorPreference: TutorPreference;
   setJourneyType: (journeyType: JourneyType) => void;
@@ -32,9 +28,9 @@ export interface RequestDraftState {
   clearDraft: () => void;
   saveContact: (contact: ClientContactDetails, clientId: string) => void;
   saveChild: (child: ChildDraftRecord) => void;
+  saveChildOnboarding: (childId: string, data: ChildOnboardingData) => void;
   removeChild: (childId: string) => void;
-  saveNeed: (need: LearningNeedDraft) => void;
-  removeNeed: (childId: string, needId: string) => void;
+  saveNeed: (need: AdultLearningNeedDraft) => void;
   removeSelfNeed: (needId: string) => void;
   setTutorPreference: (preference: TutorPreference) => void;
 }
@@ -44,7 +40,7 @@ export const useRequestDraftStore = create<RequestDraftState>()((set) => ({
   contact: null,
   clientId: null,
   children: [],
-  needsByChildId: {},
+  onboardingByChildId: {},
   selfNeeds: [],
   tutorPreference: 'none',
   setJourneyType: (journeyType) => set({ journeyType }),
@@ -55,45 +51,32 @@ export const useRequestDraftStore = create<RequestDraftState>()((set) => ({
       contact: null,
       clientId: null,
       children: [],
-      needsByChildId: {},
+      onboardingByChildId: {},
       selfNeeds: [],
       tutorPreference: 'none',
     }),
   saveContact: (contact, clientId) => set({ contact, clientId }),
   saveChild: (child) =>
-    set((state) => ({ children: upsertChildDraft(state.children, child) })),
-  removeChild: (childId) =>
     set((state) => ({
-      children: removeChildDraft(state.children, childId),
-      needsByChildId: removeChildNeedDrafts(state.needsByChildId, childId),
+      children: [child],
+      onboardingByChildId:
+        state.children[0]?.id === child.id ? state.onboardingByChildId : {},
     })),
-  saveNeed: (need) =>
+  saveChildOnboarding: (childId, data) =>
+    set((state) => ({
+      onboardingByChildId: { ...state.onboardingByChildId, [childId]: data },
+    })),
+  removeChild: (childId) =>
     set((state) => {
-      if (need.learnerIsClient) {
-        return { selfNeeds: upsertNeedDraft(state.selfNeeds, need) };
-      }
-
-      const currentNeeds = state.needsByChildId[need.childId] ?? [];
-      return {
-        needsByChildId: {
-          ...state.needsByChildId,
-          [need.childId]: upsertNeedDraft(currentNeeds, need),
-        },
-      };
-    }),
-  removeNeed: (childId, needId) =>
-    set((state) => {
-      const currentNeeds = state.needsByChildId[childId] ?? [];
-      const remainingNeeds = removeNeedDraft(currentNeeds, needId);
-      const { [childId]: _removed, ...otherNeeds } = state.needsByChildId;
+      const { [childId]: _removedOnboarding, ...otherOnboarding } =
+        state.onboardingByChildId;
 
       return {
-        needsByChildId: {
-          ...otherNeeds,
-          ...(remainingNeeds.length > 0 ? { [childId]: remainingNeeds } : {}),
-        },
+        children: removeChildDraft(state.children, childId),
+        onboardingByChildId: otherOnboarding,
       };
     }),
+  saveNeed: (need) => set((state) => ({ selfNeeds: upsertNeedDraft(state.selfNeeds, need) })),
   removeSelfNeed: (needId) =>
     set((state) => ({
       selfNeeds: removeNeedDraft(state.selfNeeds, needId),

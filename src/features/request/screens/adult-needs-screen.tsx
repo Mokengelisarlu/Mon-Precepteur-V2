@@ -154,7 +154,6 @@ export function AdultNeedsScreen({
       />
       {isAddingNeed || needToEdit !== null ? (
         <NeedForm
-          owner={{ type: 'self' }}
           need={needToEdit ?? undefined}
           onCancel={() => {
             setIsAddingNeed(false);

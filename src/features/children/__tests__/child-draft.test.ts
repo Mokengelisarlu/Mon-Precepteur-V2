@@ -4,9 +4,13 @@ import {
   childRecordToDraft,
   formValuesToChildDraft,
   removeChildDraft,
-  upsertChildDraft,
 } from '../services/child-draft';
-import type { ChildDraftRecord } from '../types';
+import {
+  buildChildDraftFromOnboarding,
+  childToOnboardingData,
+} from '../services/child-onboarding';
+import { createEmptyChildOnboardingData, type ChildDraftRecord } from '../types';
+import { useRequestDraftStore } from '@/store/request-draft-store';
 
 const child: ChildDraftRecord = {
   id: 'chd_child1',
@@ -61,28 +65,110 @@ describe('child draft conversions', () => {
 });
 
 describe('child draft collection operations', () => {
-  it('adds multiple children and updates an existing child without duplicating it', () => {
-    const secondChild: ChildDraftRecord = {
-      ...child,
-      id: 'chd_child2',
-      firstName: 'David',
-    };
-    const added = upsertChildDraft([], child);
-    const twoChildren = upsertChildDraft(added, secondChild);
-    const updated = upsertChildDraft(twoChildren, { ...child, firstName: 'Amina Rose' });
+  it('removes the selected child from the request draft', () => {
+    expect(removeChildDraft([child], child.id)).toEqual([]);
+  });
+});
 
-    expect(updated).toHaveLength(2);
-    expect(updated[0]?.firstName).toBe('Amina Rose');
-    expect(updated[1]?.firstName).toBe('David');
+describe('request draft child limit', () => {
+  afterEach(() => {
+    useRequestDraftStore.getState().clearDraft();
   });
 
-  it('removes only the selected child', () => {
+  it('replaces the child draft and clears its onboarding context when the child changes', () => {
     const secondChild: ChildDraftRecord = {
       ...child,
       id: 'chd_child2',
       firstName: 'David',
     };
 
-    expect(removeChildDraft([child, secondChild], child.id)).toEqual([secondChild]);
+    useRequestDraftStore.getState().clearDraft();
+    useRequestDraftStore.getState().saveChild(child);
+    useRequestDraftStore.getState().saveChildOnboarding(child.id, {
+      ...createEmptyChildOnboardingData(),
+      firstName: child.firstName,
+    });
+
+    useRequestDraftStore.getState().saveChild(secondChild);
+
+    expect(useRequestDraftStore.getState().children).toEqual([secondChild]);
+    expect(useRequestDraftStore.getState().onboardingByChildId).toEqual({});
+  });
+});
+
+describe('child onboarding conversions', () => {
+  const onboarding = {
+    ...createEmptyChildOnboardingData(),
+    firstName: 'Amina',
+    lastName: 'Mukendi',
+    birthYear: String(new Date().getFullYear() - 10),
+    gender: 'girl',
+    grade: 'p4',
+    school: 'Institut Mwangaza',
+    estimatedLevel: 'satisfactory',
+    notes: 'Needs encouragement.',
+  };
+
+  it('builds a child draft from the onboarding wizard data', () => {
+    const draft = buildChildDraftFromOnboarding(onboarding, 'chd_child1', 200, 100);
+
+    expect(draft).toMatchObject({
+      id: 'chd_child1',
+      firstName: 'Amina',
+      lastName: 'Mukendi',
+      level: 'P4',
+      school: 'Institut Mwangaza',
+      gender: 'girl',
+      estimatedLevel: 'satisfactory',
+      createdAt: 100,
+      updatedAt: 200,
+    });
+  });
+
+  it('restores the wizard data from a child record', () => {
+    const draft = buildChildDraftFromOnboarding(onboarding, 'chd_child1', 200);
+    const restored = childToOnboardingData(draft);
+
+    expect(restored).toMatchObject({
+      firstName: 'Amina',
+      lastName: 'Mukendi',
+      grade: 'p4',
+      school: 'Institut Mwangaza',
+      gender: 'girl',
+      estimatedLevel: 'satisfactory',
+    });
+  });
+});
+
+describe('request draft onboarding storage', () => {
+  afterEach(() => {
+    useRequestDraftStore.getState().clearDraft();
+  });
+
+  it('keeps onboarding data for the current child and clears it when the child changes', () => {
+    const onboarding = createEmptyChildOnboardingData();
+    useRequestDraftStore.getState().saveChild(child);
+    useRequestDraftStore.getState().saveChildOnboarding(child.id, onboarding);
+
+    expect(useRequestDraftStore.getState().onboardingByChildId[child.id]).toEqual(onboarding);
+
+    const secondChild: ChildDraftRecord = { ...child, id: 'chd_child2' };
+    useRequestDraftStore.getState().saveChild(secondChild);
+
+    expect(useRequestDraftStore.getState().onboardingByChildId).toEqual({});
+  });
+
+  it('removes onboarding data with the child and clears it with the draft', () => {
+    const onboarding = createEmptyChildOnboardingData();
+    useRequestDraftStore.getState().saveChild(child);
+    useRequestDraftStore.getState().saveChildOnboarding(child.id, onboarding);
+
+    useRequestDraftStore.getState().removeChild(child.id);
+    expect(useRequestDraftStore.getState().onboardingByChildId).toEqual({});
+
+    useRequestDraftStore.getState().saveChild(child);
+    useRequestDraftStore.getState().saveChildOnboarding(child.id, onboarding);
+    useRequestDraftStore.getState().clearDraft();
+    expect(useRequestDraftStore.getState().onboardingByChildId).toEqual({});
   });
 });

@@ -51,7 +51,7 @@ stores must not invent behaviour that contradicts it.
 
 | # | From | To | Trigger | Actor | Client-visible result | Guard |
 |---|---|---|---|---|---|---|
-| T-01 | — | `received` | The client submits the request | client | Confirmation screen + `request_received` notification | ≥ 1 need; contact complete; PIN set |
+| T-01 | — | `received` | The client submits the request | client | Top success toast, dashboard navigation + `request_received` notification | Adult: ≥ 1 valid need; child: exactly 1 child and valid learning context; contact complete; PIN set |
 | T-02 | `received` | `under_review` | The administrator opens the request for analysis | admin | "We are reviewing your request" | — |
 | T-03 | `under_review` | `proposal_sent` | The administrator sends a proposal | admin | Proposal becomes visible + `proposal_sent` notification | The proposal covers ≥ 1 need of the request |
 | T-04 | `proposal_sent` | `proposal_accepted` | The client accepts the proposal | client | "Proposal accepted" + `proposal_accepted` notification | The proposal's status is `sent` |
@@ -75,6 +75,8 @@ stores must not invent behaviour that contradicts it.
 - `awaiting_payment` → `payment_verified` when the payment status is `rejected` or `pending_verification`.
 - Any transition out of `completed` or `cancelled` (both are terminal).
 - `payment_verified` → `in_service` when no tutor assignment exists for any need of the request.
+- A child request containing only onboarding context cannot proceed to `proposal_sent` using the
+  current need-based proposal model; child proposal preparation is deferred under R-41.
 
 ### 2.4 Side effects of a request transition
 
@@ -127,6 +129,10 @@ Steps 3–5 happen for **every** transition, including rejections and cancellati
   (prevents double-billing for the same need).
 - When a client rejects a proposal, the request moves to `proposal_rejected` (T-05) and **stays
   open** — it is not cancelled (BR-16).
+- The current parent client flow submits child onboarding context without `LearningNeed` records.
+  Since proposals require one or more needs, the current admin proposal model cannot prepare a
+  proposal for these requests. Do not synthesize needs from the onboarding answers; child proposal
+  support is deferred pending the decision in R-41.
 
 ---
 
@@ -348,15 +354,19 @@ All rules below are implemented as Zod schemas in `src/features/<domain>/types.t
 |---|---|---|---|
 | `firstName` | Yes | Trimmed, 1–60 characters, at least one letter | `validation.child.firstName` |
 | `lastName` | No | Trimmed, 1–60 characters | `validation.child.lastName` |
-| `yearOfBirth` | Yes | Four-digit year; derived age (current calendar year minus birth year) must be 3–25 | `validation.child.yearOfBirth` |
+| `yearOfBirth` | Yes | Four-digit year; no age restriction | `validation.child.yearOfBirth` |
 | `level` | Yes | Trimmed, 1–60 | `validation.child.level` |
 | `school` | No | Trimmed, ≤ 80 | `validation.child.school` |
 | `notes` | No | ≤ 500 | `validation.child.notes` |
 
-Age is derived from the year of birth and the current calendar year. Month and day are not
-collected, so this is an estimate rather than birthday-precise age.
+Age is derived from the year of birth and the current calendar year when it is displayed. Month
+and day are not collected, so this is an estimate rather than birthday-precise age. The birth year
+itself is not restricted to the 3–25 age range.
 
 ### 11.2 Learning-need form
+
+The client-facing need form is used by the adult journey. The current child journey does not create
+`LearningNeed` records; the entity remains available for the adult flow and future admin workflows.
 
 | Field | Required | Rule | Message key |
 |---|---|---|---|
@@ -378,7 +388,15 @@ collected, so this is an estimate rather than birthday-precise age.
 | `lastName` | Yes | Trimmed, 1–60 | `validation.contact.lastName` |
 | `phone` | Yes | Normalised; 9–15 digits after normalisation; DRC prefixes accepted (`+243`, `0`) | `validation.contact.phone` |
 | `email` | No | RFC-lite; must contain `@` and a dot | `validation.contact.email` |
-| `address` | No | Trimmed, ≤ 120 | `validation.contact.address` |
+| `city` | Yes | Selected from the curated DRC city list; defaults to Lubumbashi | `validation.contact.address` |
+| `commune` | Yes | Trimmed, 1–80 | `validation.contact.address` |
+| `quartier` | Yes | Trimmed, 1–80 | `validation.contact.address` |
+| `avenue` | Yes | Trimmed, 1–120 | `validation.contact.address` |
+| `number` | Yes | Trimmed, 1–20 | `validation.contact.address` |
+
+`address` is composed from the required address parts as `number, avenue, quartier, commune, city`
+and stored on the client profile. Email remains optional. The curated city options are a prototype
+list, not an exhaustive DRC directory (R-40).
 
 ### 11.4 PIN form
 
@@ -415,8 +433,8 @@ collected, so this is an estimate rather than birthday-precise age.
 | Guard | Rule |
 |---|---|
 | G-01 | A request belongs to exactly one client. |
-| G-02 | A submitted request has ≥ 1 need. |
-| G-03 | A parent request has ≥ 1 child; an adult request has 0 children and ≥ 1 need with `learnerIsClient: true`. |
+| G-02 | A submitted adult request has ≥ 1 valid need; a submitted child request has `needIds: []` and valid `learningContext`. |
+| G-03 | A parent request has exactly 1 child and no client-created needs; an adult request has 0 children and ≥ 1 need with `learnerIsClient: true`. |
 | G-04 | A proposal covers ≥ 1 need belonging to its own request. |
 | G-05 | A need may not be covered by two accepted proposals simultaneously. |
 | G-06 | A receipt exists only for a confirmed payment. |

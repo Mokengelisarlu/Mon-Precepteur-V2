@@ -3,7 +3,11 @@ export interface ContactFormValues {
   lastName: string;
   phone: string;
   email: string;
-  address: string;
+  city: string;
+  commune: string;
+  quartier: string;
+  avenue: string;
+  number: string;
 }
 
 export interface ClientContactDetails {
@@ -12,6 +16,11 @@ export interface ClientContactDetails {
   readonly phone: string;
   readonly email?: string;
   readonly address?: string;
+  readonly city?: string;
+  readonly commune?: string;
+  readonly quartier?: string;
+  readonly avenue?: string;
+  readonly number?: string;
 }
 
 export interface ClientProfile extends ClientContactDetails {
@@ -27,5 +36,9 @@ export const EMPTY_CONTACT_FORM_VALUES: ContactFormValues = {
   lastName: '',
   phone: '',
   email: '',
-  address: '',
+  city: 'Lubumbashi',
+  commune: '',
+  quartier: '',
+  avenue: '',
+  number: '',
 };

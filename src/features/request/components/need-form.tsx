@@ -25,7 +25,6 @@ import {
   NEED_SESSION_MINUTES,
   NEED_SUBJECT_SUGGESTIONS,
   type LearningNeedDraft,
-  type NeedDraftOwner,
   type NeedFormValues,
 } from '../types';
 import { needFormSchema, type ValidNeedFormValues } from '../validation';
@@ -59,14 +58,12 @@ function isNeedValidationKey(value: string): value is (typeof NEED_VALIDATION_KE
 }
 
 export interface NeedFormProps {
-  readonly owner: NeedDraftOwner;
   readonly need?: LearningNeedDraft;
   readonly onCancel: () => void;
   readonly onSave: (need: LearningNeedDraft, isNew: boolean) => void;
 }
 
 export function NeedForm({
-  owner,
   need,
   onCancel,
   onSave,
@@ -138,7 +135,7 @@ export function NeedForm({
     const now = Date.now();
     const needId = need?.id ?? `ned_${Crypto.randomUUID()}`;
     onSave(
-      formValuesToNeedDraft(values, owner, needId, now, need?.createdAt ?? now),
+      formValuesToNeedDraft(values, needId, now, need?.createdAt ?? now),
       need === undefined,
     );
   };

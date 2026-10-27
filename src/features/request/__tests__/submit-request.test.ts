@@ -1,8 +1,7 @@
-import type { ChildDraftRecord } from '@/features/children';
+import type { ChildDraftRecord, ChildOnboardingData } from '@/features/children';
 import type { ClientProfile } from '@/features/client';
 import type {
   AdultLearningNeedDraft,
-  ChildLearningNeedDraft,
   RequestRecord,
 } from '@/features/request/types';
 
@@ -24,6 +23,12 @@ const contact = {
   firstName: 'Amina',
   lastName: 'Kabila',
   phone: '+243812345678',
+  city: 'Lubumbashi',
+  commune: 'Kampemba',
+  quartier: 'Bel-Air',
+  avenue: 'Avenue Lumumba',
+  number: '12B',
+  address: '12B, Avenue Lumumba, Bel-Air, Kampemba, Lubumbashi',
 };
 
 const child: ChildDraftRecord = {
@@ -35,19 +40,22 @@ const child: ChildDraftRecord = {
   updatedAt: 1,
 };
 
-const childNeed: ChildLearningNeedDraft = {
-  id: 'ned_child',
-  childId: child.id,
-  learnerIsClient: false,
-  subject: 'Mathematics',
-  level: 'P4',
-  objective: 'Build confidence with fractions',
-  frequency: 'weekly_2',
-  sessionMinutes: 45,
-  availability: 'Tuesday evenings',
-  format: 'online',
-  createdAt: 1,
-  updatedAt: 1,
+const learningContext: ChildOnboardingData = {
+  firstName: 'Junior',
+  lastName: '',
+  birthYear: '2016',
+  gender: 'boy',
+  grade: 'p4',
+  school: '',
+  estimatedLevel: 'satisfactory',
+  subjects: ['mathematics'],
+  otherSubject: '',
+  goals: ['homework'],
+  notes: '',
+  startDate: '2026-05-08',
+  frequency: 'weekly_3',
+  days: ['mon', 'tue', 'wed'],
+  slots: ['evening'],
 };
 
 const adultNeed: AdultLearningNeedDraft = {
@@ -84,9 +92,9 @@ function childDraft(overrides: Partial<RequestDraftData> = {}): RequestDraftData
     contact,
     clientId: client.id,
     children: [child],
-    needsByChildId: { [child.id]: [childNeed] },
+    onboardingByChildId: { [child.id]: learningContext },
     selfNeeds: [],
-    tutorPreference: 'same',
+    tutorPreference: 'none',
     ...overrides,
   };
 }
@@ -97,7 +105,7 @@ function selfDraft(overrides: Partial<RequestDraftData> = {}): RequestDraftData 
     contact,
     clientId: client.id,
     children: [],
-    needsByChildId: {},
+    onboardingByChildId: {},
     selfNeeds: [adultNeed],
     tutorPreference: 'none',
     ...overrides,
@@ -151,13 +159,14 @@ describe('submitRequest', () => {
       clientId: client.id,
       type: 'child',
       childIds: [child.id],
-      needIds: [childNeed.id],
-      tutorPreference: 'same',
+      needIds: [],
+      learningContext,
+      tutorPreference: 'none',
       status: 'received',
       submittedAt: input.now,
     });
     expect(result.value.children).toEqual([{ ...child, clientId: client.id }]);
-    expect(result.value.needs).toEqual([{ ...childNeed, requestId: 'req_test' }]);
+    expect(result.value.needs).toEqual([]);
     expect(result.value.activityEvent).toMatchObject({
       id: 'evt_test',
       requestId: 'req_test',
@@ -191,8 +200,20 @@ describe('submitRequest', () => {
     expect(result.value.needs).toEqual([{ ...adultNeed, requestId: 'req_test' }]);
   });
 
+  it('accepts a child request without creating any learning-need records', () => {
+    const result = submitRequest(createInput(childDraft()));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.value.request.needIds).toEqual([]);
+    expect(result.value.needs).toEqual([]);
+  });
+
   it.each([
-    ['no need', childDraft({ needsByChildId: {} }), client, 'review.error.noNeeds'],
+    ['missing onboarding context', childDraft({ onboardingByChildId: {} }), client, 'review.error.invalid'],
     [
       'invalid contact',
       childDraft({ contact: { ...contact, phone: 'not-a-phone' } }),
@@ -212,12 +233,12 @@ describe('submitRequest', () => {
     });
   });
 
-  it('rejects mixed child and adult data and duplicate need identifiers', () => {
+  it('rejects mixed child and adult data and duplicate adult need identifiers', () => {
     const mixedJourney = submitRequest(
       createInput(childDraft({ selfNeeds: [adultNeed] })),
     );
     const duplicateNeedIds = submitRequest(
-      createInput(childDraft({ needsByChildId: { [child.id]: [childNeed, childNeed] } })),
+      createInput(selfDraft({ selfNeeds: [adultNeed, adultNeed] })),
     );
 
     expect(mixedJourney).toMatchObject({
@@ -230,24 +251,19 @@ describe('submitRequest', () => {
     });
   });
 
-  it('rejects a child need stored under a different child', () => {
+  it('rejects a parent request containing more than one child', () => {
     const secondChild: ChildDraftRecord = {
       ...child,
       id: 'chd_second',
       firstName: 'Ariane',
     };
-    const secondNeed: ChildLearningNeedDraft = {
-      ...childNeed,
-      id: 'ned_second',
-      childId: secondChild.id,
-    };
     const result = submitRequest(
       createInput(
         childDraft({
           children: [child, secondChild],
-          needsByChildId: {
-            [child.id]: [secondNeed],
-            [secondChild.id]: [childNeed],
+          onboardingByChildId: {
+            [child.id]: learningContext,
+            [secondChild.id]: learningContext,
           },
         }),
       ),

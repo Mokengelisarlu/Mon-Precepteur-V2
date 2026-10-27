@@ -46,7 +46,7 @@ admin screens that consume it.
      Install with `npm install`. Use `npx expo install` for every `expo-*` package so the versions
      match SDK 57.
   3. Add `app.json` — copy the V1 identity: name `Mon Précepteur`, slug `mon-precepteur`, portrait,
-     light UI style, icon, splash (`#F5DEC9`), adaptive icon (`#FFF8F4`), Android
+     light UI style, icon, splash (`#F5DEC9`, using `assets/mon-precepteur-logo.png`), adaptive icon (`#FFF8F4`), Android
      `softwareKeyboardLayoutMode: "resize"`. Add `scheme`, `ios.bundleIdentifier`,
      `android.package`, `userInterfaceStyle: "light"`. **SDK 57 correction:** `newArchEnabled` no
      longer exists in the configuration schema (the New Architecture is the only one) and the
@@ -151,8 +151,8 @@ admin screens that consume it.
      French key is a compile error.
   4. Create `src/lib/i18n/index.ts` with `t(key, params?)`, interpolation (`{name}`) and explicit
      plural forms (`_one` / `_other`).
-  5. Create `src/lib/i18n/locale.ts` — detect the device locale via `expo-localization`, default to
-     `fr`, allow an explicit override persisted in the session store.
+  5. Create `src/lib/i18n/locale.ts` — default to `fr` regardless of the device locale, and allow
+     an explicit override in the session store.
   6. Create the `useTranslation()` hook returning `{ t, locale, setLocale, isRTL }`.
   7. Create `src/lib/format/` — `formatAmount`, `formatDate`, `formatDateTime`, `formatRelativeTime`,
      all locale-aware via `Intl`.
@@ -233,49 +233,55 @@ admin screens that consume it.
 
 ### [x] S05 — Welcome and entry screen revision
 
-- **Objective:** Revise the Welcome screen to the maintainer-approved minimal layout and add a
-  truthful Login availability screen, per `design.md` W-01 and W-20.
-- **Scope:** Welcome and Login route/screen, typed navigation, and their EN/FR copy. The Login
-  screen does not authenticate; real local PIN login waits for the client profile and persistence
-  roadmap steps.
+- **Objective:** Deliver the screenshot-approved Welcome screen with the local phone/PIN login and
+  new-request entry actions, per `design.md` W-01.
+- **Scope:** Welcome route/screen and hero, supplied artwork, visual tokens and EN/FR copy. The
+  separate Login availability route remains available as documented in W-20.
 - **Prerequisites:** S02, S03, S04.
 - **Tasks:**
-  1. Keep the logo and app name, remove the tagline and all Welcome content not in W-01.
-  2. Show the service description, two large actions at the bottom ("Get started" and "Login"),
-     and the "Powered by Mokengeli Sarlu" credit.
-  3. Route "Get started" to request-type selection, or resume an existing draft when restoration
-     is available; do not show a separate continue prompt.
-  4. Route "Login" to a bilingual screen that explains login is unavailable in this local
-     prototype and returns the user to Welcome. Do not present PIN fields or claim authentication.
-  5. Remove the Welcome language switch and admin entry; those remain available from their
-     documented later surfaces.
-  6. Add all new/changed copy to both dictionaries.
-- **Expected files:** `app/(client)/welcome.tsx`, `app/(client)/login.tsx`,
-  `app/(client)/_layout.tsx`, `src/features/request/screens/welcome-screen.tsx`,
-  `src/features/request/components/welcome-hero.tsx`,
-  `src/features/client/screens/login-unavailable-screen.tsx`,
-  `src/lib/navigation/routes.ts`, both dictionaries, and the directly related tests.
-- **Data & state:** The Welcome route will use the draft store when S14 supplies it. Until then,
-  it opens request-type selection. Login remains unavailable until the profile, PIN and persistence
-  flows are implemented.
+  1. Show the existing logo, app name, translated service copy and the supplied tutor-and-child
+     artwork in a compact orange hero.
+  2. Provide phone and masked four-digit PIN fields with a Login submit button that has no icon.
+  3. Keep "Need help?" between two horizontal separator lines with a Support link below it; use an
+     outlined Get started button with a leading add-user icon; do not show a company credit.
+  4. Route a valid local login to the dashboard; route Get started to request-type selection, or
+     resume an existing draft when restoration is available.
+  5. Remove the admin entry. Keep the Support link and language pill presentational until their
+     destinations exist.
+  6. Keep the PIN masked with an eye visibility toggle and add all new/changed copy to both
+     dictionaries.
+- **Expected files:** `assets/images/welcome-hero-cutout.png` (derived from the supplied artwork),
+  `types/assets.d.ts`, `src/features/request/screens/welcome-screen.tsx`, the theme tokens, both
+  dictionaries, `design.md`, and directly related tests.
+- **Data & state:** Login validates the phone and PIN against the local client profile; it is a
+  prototype flow, not production authentication. Get started opens request-type selection until
+  draft restoration is available.
 - **Acceptance criteria:**
-  - [x] Welcome shows only the logo, app name, description, two large buttons, and credit.
-  - [x] Both buttons work: Get started opens the request flow (or resumes a restored draft);
-        Login opens the unavailable notice screen.
-  - [x] The Login screen clearly states that sign-in is not available and offers a route home.
-  - [x] All visible copy is localised in FR and EN; no auth is implied.
-  - [x] The layout is usable at 360×640 dp and the actions remain reachable with large text.
-- **Tests:** Welcome render tests in FR and EN; content-exclusion and action tests; Login screen
-  copy/navigation tests; route-tree and navigation regression tests.
-- **Definition of done:** The approved Welcome content and honest Login entry are implemented,
+  - [x] The Welcome hero uses the white-tinted existing logo and the supplied artwork cut out of
+        its white background.
+  - [x] The PIN is masked with a labelled eye visibility toggle; the filled Log in action ends with
+        an arrow, and Get started is outlined with a leading add-user icon.
+  - [x] "Need help?" remains between separator lines with a Support link below it.
+  - [x] The language pill shows the active locale over the footer waves; no company credit, admin
+        entry or other links are shown.
+  - [x] All visible copy is localised in FR and EN; local login validation and request navigation
+        are covered.
+  - [x] At 360×640 dp the headline does not break words and the Login and Get started actions remain
+        visible; content can scroll for larger text.
+- **Tests:** Welcome render tests in FR and EN; hero artwork, content-exclusion and action tests;
+  local login validation tests; route-tree and navigation regression tests.
+- **Definition of done:** The approved screenshot-inspired Welcome content is implemented,
   localised and verified.
 - **Depends on:** S02, S03, S04.
 - **Prior delivery:** S05 originally passed with 120 tests; this approved follow-up reopens the
   step to replace its Welcome content and add the unavailable Login destination. The prior
   implementation remains documented in `context/progress-tracker.md`.
 - **Completed:** Revised S05 — 117 tests pass, `typecheck` and lint clean, Android export succeeds.
-  The Welcome/Login screens were manually inspected in the browser at 360×640. The Login action
-  is intentionally an unavailable notice until local client accounts and persistence are built.
+  Final visual redesign 2026-10-27: orange hero with the white-tinted logo and a transparent
+  cut-out of the supplied tutor-and-child artwork, responsive headline at 360 dp, phone/PIN
+  connection form with the eye toggle, "Need help?"/Support divider, language pill over the footer
+  waves, and no company credit. Stable PNG declarations moved to `types/assets.d.ts`. Typecheck,
+  lint and all 234 tests pass; the 390×844 and 360×640 web layouts were checked.
 
 ---
 
@@ -288,7 +294,7 @@ admin screens that consume it.
 - **Tasks:**
   1. Implement the request-type sheet per `design.md`: two large options with an icon, a title and
      a one-line explanation each.
-  2. Implement the routing decision — "For my child" → the child list; "For myself" → the adult
+  2. Implement the routing decision — "For my child" → child registration; "For myself" → the adult
      needs form.
   3. Record the chosen journey type in the request draft store.
   4. Add the copy to both dictionaries.
@@ -308,53 +314,63 @@ admin screens that consume it.
   the request draft store, and back/Escape/swipe dismissal. Full verification passed: typecheck,
   lint, 123 tests; manually checked the 360×640 web layout, option routing, Escape and swipe-down.
 
-### [x] S07 — Child list and child form
+### [x] S07 — Single-child registration and child onboarding
 
-- **Objective:** Let a parent register, edit and remove multiple children.
-- **Scope:** `src/features/children/**`, `app/(client)/children/**`.
+- **Objective:** Register exactly one child for a parent request using a full-screen form.
+- **Scope:** `src/features/children/**`, `app/(client)/children/**`, and the parent-request child
+  invariant. Additional-child profile management is deferred to S13.
 - **Prerequisites:** S06.
-- **Decision:** R-01 confirmed by the maintainer on 2026-10-23. Following S07 completion, the
-  maintainer requested that the form collect a year of birth and derive age; this supersedes the
-  former R-32 ISO date / age input approach.
+- **Decisions:** R-01 was confirmed by the maintainer on 2026-10-23. The maintainer later requested
+  collecting a year of birth and deriving age; this supersedes the former R-32 ISO date / age
+  input. The maintainer has now approved exactly one child per request and moving registration to a
+  full screen; other children will be added from the dashboard in S13 and start separate requests.
 - **Tasks:**
-  1. Define the `Child` type and the Zod schema per `context/business-rules.md` §11.1.
-  2. Implement the draft/record conversion helpers and their unit tests.
-  3. Implement the child list screen (list + empty state + "add" CTA) per `design.md`.
-  4. Implement the child form bottom sheet per `design.md`, with field-level validation and the
-     blur/submit validation timing of `context/code-standards.md` §4.5.
-  5. Implement edit and remove, with a confirmation dialog for removal.
-  6. Add the copy to both dictionaries.
-  7. Keep the child drafts in the request draft store for the child journey; the request's
-     `childIds` are derived when the request is submitted.
+  1. Keep the `Child` type and Zod schema per `context/business-rules.md` §11.1.
+  2. Keep the draft/record conversion helpers and their unit tests.
+  3. Implement child registration as a full-screen form per `design.md`, with field-level
+     validation and the blur/submit validation timing of `context/code-standards.md` §4.5.
+  4. Make the form scroll and keep the focused field and primary action reachable when the keyboard
+     opens.
+  5. Keep at most one child draft for the parent request; after onboarding, continue directly to
+     Contact. Allow editing the child from Review.
+  6. Add or retain the copy in both dictionaries.
+  7. Enforce exactly one child in submitted parent requests and update the typed request record.
 - **Expected files:** `src/features/children/types.ts`, `src/features/children/validation.ts`,
-  `src/features/children/components/child-list-item.tsx`,
-  `src/features/children/screens/child-list-screen.tsx`,
-  `src/features/children/screens/child-form-screen.tsx`, `app/(client)/children/index.tsx`,
-  `app/(client)/children/form.tsx`, dictionary updates.
-- **Data & state:** The children live in the request draft store until the request is submitted.
+  `src/features/children/screens/child-onboarding-screen.tsx`, `app/(client)/children/index.tsx`,
+  `src/store/request-draft-store.ts`, request types/submission service, tests, and directly related
+  business/design/context documentation.
+- **Data & state:** One child draft and its four-step onboarding context are held in the request
+  draft store until submission. The submitted request references that single child and stores the
+  context; additional child profiles and their separate requests are handled in S13.
 - **Acceptance criteria:**
-  - [x] Two children can be added, edited and removed.
-  - [x] The empty state renders when there are no children.
-  - [x] Validation rejects an empty first name, a missing level, and a birth year that is invalid
-    or derives an age outside 3–25.
-  - [x] A required four-digit `yearOfBirth` is collected; displayed age is derived from the
-    current calendar year.
-  - [x] Removing a child asks for confirmation.
-  - [x] The "Continue" action is enabled only when ≥ 1 child exists.
-- **Tests:** Schema tests (valid + each invalid rule); a list render test; a form submit test; an
-  add/edit/remove integration test through the store.
-- **Definition of done:** The parent can build a list of children with validated data.
+  - [x] The parent journey opens the child form as a full-screen route, not a bottom sheet or list.
+  - [x] Exactly one child can be stored in and submitted with a parent request.
+  - [x] Finishing the four-step onboarding saves one child and continues directly to Contact.
+  - [x] The child can be edited from Review.
+  - [x] Validation rejects an empty first name, a missing level, and a birth year that is not a
+    four-digit year.
+  - [x] A required four-digit `yearOfBirth` is collected without an age restriction; displayed
+    age is derived from the current calendar year.
+  - [x] The onboarding form scrolls and remains usable at 360×640 dp with safe areas respected.
+  - [x] The session-duration and child-address fields are absent; the parent's address is collected
+    in Contact.
+  - [x] The screen respects safe areas, omits helper/placeholder/character-count copy, and remains
+    usable at 360×640 dp.
+  - [x] The focused input remains visible above the keyboard.
+- **Tests:** Schema tests (valid + invalid rules); onboarding component and parent-route tests;
+  submission tests enforce the single-child invariant.
+- **Definition of done:** The parent can register and edit one validated child, preserve the
+  onboarding context, and continue directly to Contact without a child list or needs screen.
 - **Depends on:** S06.
-- **Completed:** Child drafts, list and form are implemented with localized validation,
-  add/edit/remove confirmation, and guarded navigation. Typecheck, lint, all 147 Jest tests, and
-  Android export pass; the parent flow, empty state, validation error and save confirmation were
-  manually checked at 360×640. The later birth-year adjustment is reflected in the current
-  acceptance criteria and R-32.
+- **Completed:** The approved four-step onboarding removes session duration and child address,
+  saves its learning context, and routes directly to the two-step parent Contact form. The current
+  follow-up verification status, including repository-wide blockers, is recorded in
+  `context/progress-tracker.md`.
 
-### [x] S08 — Child needs
+### [x] S08 — Request-scoped learning needs
 
-- **Objective:** Let a parent describe one or more learning needs per child.
-- **Scope:** `src/features/request/**` (needs), `app/(client)/needs/child/[childId].tsx`.
+- **Objective:** Define request-scoped learning needs and the original parent need-capture flow.
+- **Scope:** `src/features/request/**` (needs); the original child-needs route is now a redirect.
 - **Prerequisites:** S07.
 - **Decision:** R-02 confirmed by the maintainer on 2026-10-23: children are profile-scoped and
   reusable; needs are request-scoped and re-entered for each request. R-33 confirmed: cadence is
@@ -375,7 +391,10 @@ admin screens that consume it.
   `src/features/request/components/tutor-preference.tsx`,
   `src/features/request/screens/child-needs-screen.tsx`,
   `app/(client)/needs/child/[childId].tsx`, dictionary updates.
-- **Data & state:** Needs live in the draft store, keyed by `childId`.
+- **Data & state:** At original delivery, child needs lived in the draft store keyed by `childId`.
+  The current parent flow does not create child needs; adult needs remain separate in `selfNeeds`.
+- **Original S08 acceptance:** The following criteria describe the implementation when S08 was
+  delivered. The approved S12 follow-up removed child need capture from the current client journey.
 - **Acceptance criteria:**
   - [x] Two needs can be added to the same child; they appear as independent items.
   - [x] Each need can be edited and removed independently.
@@ -385,8 +404,13 @@ admin screens that consume it.
   - [x] Each child's needs are scoped to that child only.
 - **Tests:** Schema tests including the conditional `location`; a test that two needs on one child
   coexist; a test that needs are isolated between children.
-- **Definition of done:** Multi-need, multi-child capture works and is validated.
+- **Definition of done:** The request-scoped need model and need form were delivered; parent-flow
+  use was superseded by the approved S12 follow-up.
 - **Depends on:** S07.
+- **Current parent-flow note:** The child-needs screen was removed in the approved S12 follow-up.
+  The existing need model remains for adult needs and future administrative use; the current
+  parent flow does not create child `LearningNeed` records. Child proposals remain deferred under
+  R-41.
 
 ### [x] S09 — Adult learning request
 
@@ -453,8 +477,10 @@ admin screens that consume it.
 - **Depends on:** S08, S09.
 - **Completed:** Added bilingual contact capture for both journeys, normalized DRC numbers to
   `+243…`, saved contact details and the client ID in the request draft, and reused matching
-  profiles without creating another. Typecheck, lint and all 191 tests pass; the adult flow,
-  validation errors, empty optional email and navigation to PIN were checked in a 360×640 browser.
+  profiles without creating another. The approved follow-up makes parent Contact a two-step form:
+  identity and contact, then required structured address; city defaults to Lubumbashi and the
+  composed address is saved on the client profile. Current follow-up checks are recorded in
+  `context/progress-tracker.md`.
 
 ### [x] S11 — PIN demonstration flow
 
@@ -492,25 +518,23 @@ admin screens that consume it.
 
 ### [x] S12 — Request review and submission
 
-- **Objective:** Let the client review the whole request, submit it, and receive a local reference
-  and a confirmation.
+- **Objective:** Let the client review the whole request, submit it, and receive a local reference.
 - **Scope:** `src/features/request/**`, `app/(client)/review.tsx`, `app/(client)/submitted.tsx`.
 - **Tasks:**
-  1. Implement the review screen per `design.md`: children (or the adult learner), each child's
-     needs, contact details, the tutor preference — with per-section edit links that return to
-     the relevant step.
-  2. Implement the submission service: validate that the request is complete (≥ 1 need, contact
-     valid, PIN set), generate the request id and the human-readable reference, set the status to
+  1. Implement the review screen per `design.md`: child and learning context for a parent, or
+     adult learner and needs for an adult, plus contact details — with per-section edit links.
+  2. Implement the submission service: validate the journey-specific request shape (adult: ≥ 1
+     need; parent: one child and learning context, no client-created needs), contact and PIN;
+     generate the request id and human-readable reference, set the status to
      `received`, write the first `ActivityEvent`, and create the `request_received` notification.
-  3. Implement the confirmation screen per `design.md`: the reference, what happens next, and the
-     primary CTA to the dashboard.
+  3. On success, clear the draft, show the translated top success toast, and navigate directly to
+     the dashboard. The legacy confirmation route is not used by submission.
   4. Implement the reference generator (`MP-2026-0148` style) as a pure function.
   5. Add the copy to both dictionaries.
 - **Expected files:** `src/features/request/services/submit-request.ts`,
   `src/features/request/lib/reference.ts`,
-  `src/features/request/screens/review-screen.tsx`,
-  `src/features/request/screens/submitted-screen.tsx`, `app/(client)/review.tsx`,
-  `app/(client)/submitted.tsx`, dictionary updates.
+  `src/features/request/screens/review-screen.tsx`, `app/(client)/review.tsx`,
+  request/client/contact flow and dictionary updates.
 - **Data & state:** The request moves from the draft store to the request store.
 - **Acceptance criteria:**
   - [x] The review lists every entered value correctly, in both journeys.
@@ -518,17 +542,20 @@ admin screens that consume it.
   - [x] On submission a reference is generated, the status is `received`, an event is written and a
         notification is created.
   - [x] The draft is cleared after a successful submission.
-  - [x] The confirmation screen explains the next step in plain language.
+  - [x] Parent review shows child learning context and no child needs; adult review is unchanged.
+  - [x] Success shows a top toast and navigates to the dashboard.
 - **Tests:** A submission integration test (draft → submitted request, status, event, notification,
   cleared draft); an incomplete-request test; a reference-format test.
-- **Definition of done:** The client can complete and submit a request and receives a reference.
+- **Definition of done:** The client can review and submit either journey; a parent request stores
+  onboarding context without child `LearningNeed` records, while adult requests retain needs.
 - **Depends on:** S07, S08, S09, S10, S11.
-- **Completed:** Parent and adult review screens render every captured value with per-section edit
-  links; submission validates completeness, creates the `received` request with its reference,
-  promotes children and needs, writes the client `ActivityEvent`, creates the `request_received`
-  notification and clears the draft. The confirmation screen shows the reference and next steps
-  with a dashboard CTA. Typecheck, lint, all 217 Jest tests / 36 suites and an Android export pass;
-  the parent flow was manually checked in the browser at 360×640.
+- **Completed:** Parent review shows the child and saved learning context; adult review retains its
+  needs and tutor preference. Submission creates the `received` request, reference, client
+  `ActivityEvent` and `request_received` notification, then clears the draft. Child requests have
+  empty `needIds`; adult requests preserve their needs. Success shows a top toast and opens the
+  dashboard. The legacy confirmation screen is not part of this flow. Current follow-up test and
+  manual-check results, including the repository-wide blockers, are recorded in
+  `context/progress-tracker.md`.
 
 ---
 
@@ -649,6 +676,9 @@ admin screens that consume it.
 - **Scope:** `src/features/proposal/**`, `app/(admin)/proposal/new.tsx`,
   `app/(client)/proposal/[proposalId].tsx`.
 - **Prerequisites:** S15.
+- **Child-request boundary:** The current parent flow creates no `LearningNeed` records, while the
+  proposal schema requires at least one need. Do not synthesize needs from `learningContext`;
+  proposal support for child requests is blocked pending R-41. Adult proposals remain in scope.
 - **Tasks:**
   1. Define the `Proposal` type and schema, including the guard that a need cannot be covered by
      two accepted proposals (G-05).

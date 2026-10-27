@@ -60,6 +60,10 @@ government apps.
 
 ```ts
 export const palette = {
+  brandOrange: '#F68C1F',
+  brandWaveLight: '#FFD08F',
+  brandWaveMid: '#FFC673',
+  brandWaveDark: '#FDAD45',
   primary: '#9A4D00',
   onPrimary: '#FFFFFF',
   primaryContainer: '#FFDCC2',
@@ -100,6 +104,10 @@ Tailwind colours:
 
 | Tailwind token | Value | MD3 role |
 |---|---|---|
+| `brand-orange` | `#F68C1F` | brand seed; Welcome hero |
+| `brand-wave-light` | `#FFD08F` | Welcome footer wave (light) |
+| `brand-wave-mid` | `#FFC673` | Welcome footer wave (mid) |
+| `brand-wave-dark` | `#FDAD45` | Welcome footer wave (dark) |
 | `primary` | `#9A4D00` | primary |
 | `on-primary` | `#FFFFFF` | onPrimary |
 | `primary-container` | `#FFDCC2` | primaryContainer |
@@ -185,7 +193,7 @@ Status colours are **never used as the only signal** — every status badge also
 |---|---|---|
 | `xs` | 4 | `p-1` |
 | `s` | 8 | `p-2` |
-| `md` | 12 | `p-3` |
+| `m` / `md` | 12 | `p-3` (both `m` and `md` tokens supported) |
 | `l` | 16 | `p-4` (screen padding) |
 | `xl` | 24 | `p-6` |
 | `xxl` | 32 | `p-8` |
@@ -250,7 +258,8 @@ the icon never replaces a text label for an action.
 7. **No horizontal scrolling, ever.** Long content wraps.
 8. **Tap targets** are at least 44×44 dp.
 9. **The keyboard must never cover the focused field.** The primary footer action rises above the
-   keyboard, or the field is scrolled into view.
+   keyboard, or the field is scrolled into view. Child registration uses a full-screen route with a
+   keyboard-avoiding, scrollable form and a pinned Save action.
 
 ---
 
@@ -293,25 +302,25 @@ The rule is therefore:
 |---|---|---|
 | `Button` | Primary / secondary / tertiary / destructive | Variants: `filled`, `tonal`, `outlined`, `text` (there is no separate `ghost` variant — `text` covers it). Sizes: `sm`, `md`, `lg`. The loading state shows a spinner, sets `busy` and disables the button. `fullWidth` for form footers. |
 | `IconButton` | Icon-only action | Requires `accessibilityLabel`. Variants and sizes mirror `Button`. |
-| `Input` | Text field | Label above, helper/error text below, optional leading/trailing icon, `secureTextEntry` support, character counter when `maxLength` is set. |
-| `Select` | Select field | Opens a **modal bottom sheet** with a single-selection list (a check mark marks the selected option), not a platform picker. Its modal presentation allows selectors to open above form sheets. |
+| `Input` | Text field | Label above, helper/error text below, optional leading/trailing icon, `secureTextEntry` support, optional character counter when `maxLength` is set; `compact` is available for dense forms. |
+| `Select` | Select field | Opens a **modal bottom sheet** with a single-selection list (a check mark marks the selected option), not a platform picker. Its modal presentation allows selectors to open above form sheets; `compact` is available for dense forms; an optional `leadingIcon` mirrors `Input`. |
 | `MultiSelect` | Multi-choice select | Opens the same modal bottom sheet as `Select` with a checkbox list; the selection is applied on confirmation. Used for the covered needs of a proposal and the billable needs of an invoice. |
-| `TextArea` | Multi-line input | Grows with the content between `minHeight` and `maxHeight`; shows a character counter when `maxLength` is set. |
+| `TextArea` | Multi-line input | Grows with the content between `minHeight` and `maxHeight`; optional character counter when `maxLength` is set; `compact` is available for dense forms. |
 | `DateField` | Date field | **Deferred in S02** — requires `@react-native-community/datetimepicker`, which is not a dependency of the prototype. |
-| `PinInput` | 4-digit code entry | Boxes, digits only, auto-completes, accessible as a single field. |
+| `PinInput` | 4-digit code entry | Boxes, digits only, auto-completes, accessible as a single field. `variant="brand"` matches the Welcome design; `showVisibilityToggle` adds a labelled eye toggle while keeping the input accessible as a single field. |
 | `Checkbox` | Boolean field | A labelled native checkbox with a 44 dp touch target. Used for the administrator's pre-assignment checks. |
 | `Attachment` | Optional file field | **Deferred in S02** — requires `expo-image-picker`, which is not a dependency of the prototype (R-16). |
 | `Card` | Content container | `surface-container` background, 12 radius, optional header row, optional `onPress`. |
 | `Surface` | Tinted container | Variants: `surface`, `low`, `container`, `high`, `highest`. Elevation: `none`, `elevation-1`, `elevation-2`, `elevation-3`. |
-| `ListItem` | Row in a list | Title, description, optional leading icon, optional trailing icon, optional `onPress`. |
+| `ListItem` | Row in a list | Title, description, optional leading icon, optional trailing icon (separated by generous 16dp `gap-l`), optional `onPress`. |
 | `Badge` | Status pill | Colour + text label (never colour alone). Variants: neutral, primary, success, warning, error, info. |
 | `Avatar` | Initials avatar | Derived from the first letters of the name; uses `primary-container`. |
-| `Sheet` | Bottom sheet | Wraps `@gorhom/bottom-sheet`. Controlled by a `visible` prop, title, optional footer, keyboard-aware height, pan-down to close. |
+| `Sheet` | Bottom sheet | Wraps `@gorhom/bottom-sheet`. Controlled by a `visible` prop, title, optional footer, keyboard-aware height, pan-down to close. `enableDynamicSizing` is configurable (defaults to `false` when explicit `snapPoints` are provided so the sheet opens at the specified height); `fullHeight` fills the area below the system safe-area inset; `keyboardBehavior` and `androidKeyboardInputMode` configure keyboard movement for forms. Form controls opt into `BottomSheetTextInput`, and sheet forms use `BottomSheetScrollView`, so focusing and scrolling stay coordinated with the keyboard. |
 | `Dialog` | Modal confirmation | React Native `Modal`; only for destructive or irreversible confirmations. |
 | `EmptyState` | No-content placeholder | Icon, title, description, optional CTA. |
 | `ErrorState` | Recoverable error | Icon, title, description, "Try again" action. |
 | `Skeleton` | Loading placeholder | Matches the shape of the content it replaces. Static (no shimmer) so it never disturbs a test or a reduced-motion user. |
-| `Toast` | Transient feedback | Success / error / info. Auto-dismiss 3 s. Never used for information the user must act on. The provider that stacks the toasts is `ToastHost` (built in **S04**). |
+| `Toast` | Transient feedback | Success / error / info. Auto-dismiss 3 s. Never used for information the user must act on. The `ToastHost` stacks toasts below the top safe-area inset (built in **S04**). |
 | `Alert` | Inline message block | A persistent, dismissible block inside a card: `info`, `warning`, `error`, `success`. Used for the simulation notices and the duplicate-transaction warning. Announced with `role="alert"` when it is an error. |
 | `ProgressBar` | Progress indicator | Optional label and percentage; the value is exposed to the accessibility tree as a `progressbar`. |
 | `Stepper` | Ordered step indicator | Used on the request flow header. |
@@ -327,9 +336,10 @@ The rule is therefore:
 
 ### 6.1 Bottom sheets
 
-- Used for **secondary choices and short forms**: request type, child form, need form, selects,
+- Used for **secondary choices and short forms**: request type, need form, selects,
   confirmations, the "continue your request" prompt.
 - A sheet never contains more than one screen of content; if it needs more, it becomes a route.
+  Child registration is a full-screen route.
 - Sheets are dismissible by swipe-down and by the back gesture.
 - The sheet's title is always visible; the primary action is pinned at the bottom of the sheet.
 - **The request-type selection is a sheet on the Welcome screen**, per the brief.
@@ -369,7 +379,7 @@ The rule is therefore:
 | Screen transition | Fade + slight vertical offset (Expo Router default) | 250 ms |
 | Sheet | Slide from the bottom | 250 ms |
 | Button press | Opacity 0.7 + scale 0.98 | 120 ms |
-| Toast | Fade + slide up | 200 ms in / 200 ms out |
+| Toast | Fade + slide down from the top | 200 ms in / 200 ms out |
 | List item insert | Fade | 200 ms |
 
 All motion respects the "reduce motion" setting where the platform exposes it. No looping or
@@ -401,7 +411,7 @@ attention-seeking animation.
 
 | Width | Behaviour |
 |---|---|
-| ≤ 360 dp | Single column everywhere. Buttons full width. No side-by-side actions. |
+| ≤ 360 dp | Single-column content except field pairs explicitly specified by the screen design. Buttons full width. No side-by-side actions. |
 | 361–600 dp | Single column, wider gutters. |
 | > 600 dp (tablet) | Content is centred with a max width of 640. Cards may use a two-column grid on the dashboard summary. |
 
@@ -412,9 +422,9 @@ common denominator for budget Android devices in the DRC.
 
 ## 9. Localization Considerations
 
-- **Two locales: FR (default) and EN.** The decision is explicit: FR is the product's primary
-  language; EN is the second supported language. The default is FR unless the device locale is
-  English.
+- **Two locales: FR (default) and EN.** FR is the product's primary language; EN is the second
+  supported language. New sessions start in FR regardless of the device locale; the user may
+  explicitly switch to EN.
 - **Structure**: `src/lib/i18n/locales/en.ts` is the canonical key set;
   `src/lib/i18n/locales/fr.ts` is typed as `Record<TranslationKey, string>`, so a missing French
   key is a **compile error**. The key sets cannot drift.

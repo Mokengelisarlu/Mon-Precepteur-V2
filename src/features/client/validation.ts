@@ -57,12 +57,41 @@ export const contactFormSchema = z
         (value) => value.length === 0 || EMAIL_PATTERN.test(value),
         'validation.contact.email',
       ),
-    address: z.string().trim().max(120, 'validation.contact.address'),
+    city: z
+      .string()
+      .trim()
+      .min(1, 'validation.contact.address')
+      .max(80, 'validation.contact.address'),
+    commune: z
+      .string()
+      .trim()
+      .min(1, 'validation.contact.address')
+      .max(80, 'validation.contact.address'),
+    quartier: z
+      .string()
+      .trim()
+      .min(1, 'validation.contact.address')
+      .max(80, 'validation.contact.address'),
+    avenue: z
+      .string()
+      .trim()
+      .min(1, 'validation.contact.address')
+      .max(120, 'validation.contact.address'),
+    number: z
+      .string()
+      .trim()
+      .min(1, 'validation.contact.address')
+      .max(20, 'validation.contact.address'),
   })
-  .transform(({ email, address, ...details }) => ({
+  .transform(({ email, city, commune, quartier, avenue, number, ...details }) => ({
     ...details,
+    city,
+    commune,
+    quartier,
+    avenue,
+    number,
+    address: `${number}, ${avenue}, ${quartier}, ${commune}, ${city}`,
     ...(email.length > 0 ? { email } : {}),
-    ...(address.length > 0 ? { address } : {}),
   }));
 
 export type ValidContactDetails = z.output<typeof contactFormSchema>;

@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-const MIN_CHILD_AGE = 3;
-const MAX_CHILD_AGE = 25;
-
 export function ageFromBirthYear(
   yearOfBirth: number,
   currentYear = new Date().getFullYear(),
@@ -10,13 +7,8 @@ export function ageFromBirthYear(
   return currentYear - yearOfBirth;
 }
 
-function isValidYearOfBirth(value: string): boolean {
-  if (!/^\d{4}$/.test(value)) {
-    return false;
-  }
-
-  const age = ageFromBirthYear(Number(value));
-  return age >= MIN_CHILD_AGE && age <= MAX_CHILD_AGE;
+export function isValidYearOfBirth(value: string): boolean {
+  return /^\d{4}$/.test(value.trim());
 }
 
 export const childFormSchema = z

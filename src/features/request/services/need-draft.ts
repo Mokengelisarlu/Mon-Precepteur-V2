@@ -1,8 +1,6 @@
 import type {
   AdultLearningNeedDraft,
-  ChildLearningNeedDraft,
   LearningNeedDraft,
-  NeedDraftOwner,
   NeedFormValues,
 } from '../types';
 import type { ValidNeedFormValues } from '../validation';
@@ -37,28 +35,12 @@ export function needDraftToFormValues(need?: LearningNeedDraft): NeedFormValues 
 
 export function formValuesToNeedDraft(
   values: ValidNeedFormValues,
-  owner: { readonly type: 'child'; readonly childId: string },
-  id: string,
-  now: number,
-  createdAt?: number,
-): ChildLearningNeedDraft;
-export function formValuesToNeedDraft(
-  values: ValidNeedFormValues,
-  owner: { readonly type: 'self' },
   id: string,
   now: number,
   createdAt?: number,
 ): AdultLearningNeedDraft;
 export function formValuesToNeedDraft(
   values: ValidNeedFormValues,
-  owner: NeedDraftOwner,
-  id: string,
-  now: number,
-  createdAt?: number,
-): LearningNeedDraft;
-export function formValuesToNeedDraft(
-  values: ValidNeedFormValues,
-  owner: NeedDraftOwner,
   id: string,
   now: number,
   createdAt = now,
@@ -80,9 +62,7 @@ export function formValuesToNeedDraft(
     updatedAt: now,
   };
 
-  return owner.type === 'self'
-    ? { ...commonFields, learnerIsClient: true }
-    : { ...commonFields, childId: owner.childId, learnerIsClient: false };
+  return { ...commonFields, learnerIsClient: true };
 }
 
 export function upsertNeedDraft<TNeed extends LearningNeedDraft>(
@@ -102,14 +82,4 @@ export function removeNeedDraft<TNeed extends LearningNeedDraft>(
   needId: string,
 ): readonly TNeed[] {
   return needs.filter((need) => need.id !== needId);
-}
-
-export function removeChildNeedDrafts(
-  needsByChildId: Readonly<
-    Record<string, readonly ChildLearningNeedDraft[]>
-  >,
-  childId: string,
-): Readonly<Record<string, readonly ChildLearningNeedDraft[]>> {
-  const { [childId]: _removed, ...remaining } = needsByChildId;
-  return remaining;
 }

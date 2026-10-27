@@ -58,12 +58,7 @@ export function PinScreen({
 
   const steps = isAdultJourney
     ? [t('children.stepNeeds'), t('children.stepContact'), t('nav.pin')]
-    : [
-        t('nav.children'),
-        t('children.stepNeeds'),
-        t('children.stepContact'),
-        t('nav.pin'),
-      ];
+    : [t('nav.childForm'), t('children.stepContact'), t('nav.pin')];
   const title = t(isExistingClient ? 'pin.verifyTitle' : 'pin.createTitle');
 
   const handleInvalid: SubmitErrorHandler<PinFormValues> = (formErrors) => {

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ToastHost } from '@/components/feedback';
 import { AdultNeedsScreen } from '@/features/request/screens/adult-needs-screen';
@@ -23,17 +24,24 @@ describe('Adult needs screen', () => {
 
   function renderScreen(needs: readonly AdultLearningNeedDraft[] = []) {
     return render(
-      <ToastHost>
-        <AdultNeedsScreen
-          needs={needs}
-          tutorPreference="none"
-          onSaveNeed={onSaveNeed}
-          onRemoveNeed={onRemoveNeed}
-          onTutorPreferenceChange={onTutorPreferenceChange}
-          onBack={onBack}
-          onContinue={onContinue}
-        />
-      </ToastHost>,
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 390, height: 844 },
+          insets: { top: 24, right: 0, bottom: 0, left: 0 },
+        }}
+      >
+        <ToastHost>
+          <AdultNeedsScreen
+            needs={needs}
+            tutorPreference="none"
+            onSaveNeed={onSaveNeed}
+            onRemoveNeed={onRemoveNeed}
+            onTutorPreferenceChange={onTutorPreferenceChange}
+            onBack={onBack}
+            onContinue={onContinue}
+          />
+        </ToastHost>
+      </SafeAreaProvider>,
     );
   }
 

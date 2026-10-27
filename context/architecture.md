@@ -196,15 +196,14 @@ app/
 │   ├── login.tsx                     # Prototype login availability notice
 │   ├── request-type.tsx              # 2. Request type (bottom sheet)
 │   ├── children/
-│   │   ├── index.tsx                 # 3A. Child list
-│   │   └── form.tsx                  # 3A. Child form (bottom sheet, add/edit)
+│   │   └── index.tsx                 # 3A. Child onboarding and learning context
 │   ├── needs/
-│   │   ├── child/[childId].tsx       # 3B. Needs for one child
+│   │   ├── child/[childId].tsx       # Legacy child-needs URL; redirects to Contact
 │   │   └── self.tsx                  # 3C. Adult learning needs
-│   ├── contact.tsx                   # 4. Contact details
+│   ├── contact.tsx                   # 4. Two-step identity and address form
 │   ├── pin.tsx                       # 5. PIN creation + confirmation
-│   ├── review.tsx                    # 6. Review & submit
-│   ├── submitted.tsx                 # 6b. Submission confirmation
+│   ├── review.tsx                    # 6. Review, submit, success toast and dashboard
+│   ├── submitted.tsx                 # Legacy confirmation route; not used by submission
 │   ├── dashboard.tsx                 # 7. Client dashboard
 │   ├── proposal/[proposalId].tsx     # 7b. Proposal detail (accept / reject)
 │   ├── contract/[contractId].tsx     # 7c. Contract detail + simulated signature
@@ -251,7 +250,6 @@ The validation uses the entity-id prefixes of §6.3 (`src/lib/navigation/params.
 
 | Route | Params | Validated prefix |
 |---|---|---|
-| `/needs/child/[childId]` | `childId: string` | `chd_` |
 | `/proposal/[proposalId]` | `proposalId: string` | `prp_` |
 | `/contract/[contractId]` | `contractId: string` | `ctr_` |
 | `/invoice/[invoiceId]` | `invoiceId: string` | `inv_` |
@@ -278,8 +276,9 @@ The client declares the payment **for an invoice**, so `/payment/…` carries th
   to the dashboard — never a crash and never a blank screen.
 - The admin simulation is reachable from the client dashboard through a clearly labelled
   "Administration (simulation)" entry. The Welcome screen has no admin entry.
-- **No modal route blocks the stack**: bottom sheets and dialogs are used for secondary choices,
-  and are implemented as components (not routes) so the native back gesture is never trapped.
+- **No modal route blocks the stack**: bottom sheets and dialogs are used for secondary choices and
+  short forms. Child registration is a full-screen route. Modal choices are implemented as
+  components so the native back gesture is never trapped.
 - Selector sheets use React Native `Modal` presentation so they render above an already-open form
   sheet; regular form sheets continue to use `@gorhom/bottom-sheet`.
 - **Every screen has a translated header title.** The title comes from the `nav.*` keys of the
@@ -297,7 +296,7 @@ Each domain owns its screens, components, hooks, services, storage adapter and t
 |---|---|---|
 | `request` | The request draft, the needs builder, the review screen, submission, request status derivation, the welcome screen | Contract/payment logic |
 | `client` | Client profile, contact form, PIN, session unlock | Request content |
-| `children` | Child records, child form, child list | The needs attached to a child |
+| `children` | Child records and registration form | The needs attached to a child |
 | `proposal` | Proposal creation, client acceptance/rejection | Contract text, invoice amounts |
 | `contract` | Contract preparation, issuing, client signature simulation | Proposal content |
 | `invoice` | Invoice creation, numbering, status | Payment verification |
@@ -321,7 +320,7 @@ real role model is a backend concern (see §10).
 |---|---|---|
 | `useSessionStore` | Current client session (clientId, phone, unlocked), locale override | Yes |
 | `useClientStore` | Complete client profiles, including lookup by their normalized phone | Yes — profiles are currently kept in memory; persisted from S14 |
-| `useRequestDraftStore` | The request currently being built (journey type, client ID and contact details, child drafts, child-keyed needs, adult self needs, PIN step) | Yes — persisted with the full draft from S14; all draft fields are currently kept in memory |
+| `useRequestDraftStore` | The request currently being built (journey type, client ID and structured contact details, child drafts and child onboarding context, adult self needs, PIN step) | Yes — persisted with the full draft from S14; all draft fields are currently kept in memory |
 | `useRequestStore` | Submitted requests + their derived status | Yes |
 | `useDomainStore` | Proposals, contracts, invoices, payments, receipts, assignments, tutors | Yes |
 | `useNotificationStore` | Notifications + unread count | Yes |
@@ -493,7 +492,12 @@ Reusable client profile. Owned by the account, not by a single request.
 | `lastName` | `string` | R | Trimmed, 1–60 |
 | `phone` | `string` | R | Primary identifier. Stored in canonical `+243…` form; accepted local `0…` and `8…` forms are normalised before storage. Unique. |
 | `email` | `string` | O | RFC-lite validation, unique if present |
-| `address` | `string` | O | Neighbourhood / locality (≤ 120) |
+| `address` | `string` | R for new contact submissions | Composed from the structured address parts in the contact form |
+| `city` | `string` | R for new contact submissions | Selected from the curated DRC city list; defaults to Lubumbashi |
+| `commune` | `string` | R for new contact submissions | |
+| `quartier` | `string` | R for new contact submissions | |
+| `avenue` | `string` | R for new contact submissions | |
+| `number` | `string` | R for new contact submissions | Address number |
 | `pinHash` | `string` | R | Salted SHA-256 hex. **Never the plain PIN.** |
 | `pinSalt` | `string` | R | 16 random bytes hex |
 | `createdAt` | `number` | R | Epoch ms |
@@ -512,14 +516,23 @@ Profile-level, reusable across the client's requests.
 | `clientId` | `string` | R | Owner |
 | `firstName` | `string` | R | Trimmed, 1–60 |
 | `lastName` | `string` | O | Trimmed, 1–60 (prompt allows "last name, if required") |
-| `yearOfBirth` | `number` | R | Four-digit birth year; displayed age is derived from the current calendar year (3–25) |
+| `yearOfBirth` | `number` | R | Four-digit birth year; displayed age is derived from the current calendar year (no age restriction) |
 | `level` | `string` | R | Educational level, free-form + suggestions (e.g. "6e", "Primaire 3") |
 | `school` | `string` | O | Optional; the V1 prototype required it, V2 makes it optional to reduce friction |
 | `notes` | `string` | O | ≤ 500 |
+| `gender` | `'boy' \| 'girl'` | O | Collected by the W-03 onboarding wizard |
+| `estimatedLevel` | `string` | O | First estimate from the wizard (`low`, `intermediate`, `satisfactory`, `high`); refined after the first session |
 | `createdAt` / `updatedAt` | `number` | R | Epoch ms |
 
 Relationships: n children → 1 client; n requests may reference the same child.
 Storage: persisted locally; intended for future server storage.
+
+The W-03 wizard keeps a `ChildOnboardingData` draft per child in the local request-draft store
+(`onboardingByChildId`). The four-step wizard captures grade, estimated level, subjects, goals,
+additional notes, preferred start date, cadence, days and time slots. It does not collect session
+duration or address. On submission this context is copied to the child request's `learningContext`;
+it is not converted into `LearningNeed` records. The request draft remains local-only and is cleared
+after successful submission.
 
 #### Request (`req_`)
 
@@ -531,21 +544,23 @@ The central workflow container.
 | `reference` | `string` | R | Human-readable, unique. Generated locally from the date + a counter. |
 | `clientId` | `string` | R | Owner |
 | `type` | `'child' \| 'self'` | R | Journey type |
-| `childIds` | `string[]` | R | Empty for `type: 'self'` |
-| `needIds` | `string[]` | R | ≥ 1 when submitted |
+| `childIds` | `readonly [string] \| readonly []` | R | One child for `type: 'child'`; empty for `type: 'self'` |
+| `needIds` | `string[]` | R | Empty for a submitted child request; ≥ 1 for a submitted adult request |
+| `learningContext` | `ChildOnboardingData` | R for `type: 'child'` | Preserves child-onboarding answers on the submitted request; absent for adult requests |
 | `tutorPreference` | `'same' \| 'different' \| 'none'` | R | Default `'none'` |
 | `status` | `RequestStatus` | R | See `context/business-rules.md` §2 |
 | `createdAt` / `updatedAt` | `number` | R | Epoch ms |
 | `submittedAt` | `number` | O | Set on submission |
 
-Relationships: 1 request → 1 client; 1 request → n children (via `childIds`); 1 request → n needs;
+Relationships: 1 request → 1 client; 1 parent request → 1 child (via `childIds`); 1 request → 0..n needs;
 1 request → n proposals (successive proposals after rejections); 1 request → 1..n events.
 
 Storage: persisted locally; intended for future server storage.
 
 #### LearningNeed (`ned_`)
 
-The central business entity.
+The structured learning requirement used by the adult client journey and by later need-based
+administrative workflows. The current child client journey does not create these records.
 
 | Field | Type | R/O | Notes |
 |---|---|---|---|
@@ -569,6 +584,8 @@ weekly, monthly and Flexible cadences, so they are not all representable as a tr
 number (R-33). Labels are localized at presentation time.
 
 Invariants: exactly one of `childId` set / `learnerIsClient === true`. Enforced by Zod refinement.
+Adult submissions create one or more needs with `learnerIsClient: true`; child submissions create
+none and instead carry their onboarding answers as request-level `learningContext`.
 
 Relationships: n needs → 1 request; 1 need → 0..n assignments; n needs → 0..n proposals.
 
@@ -947,11 +964,11 @@ eventually live.
 7. Icons come exclusively from `lucide-react-native` via `src/components/ui/Icon.tsx` — this centralises
    the `react-native-svg` dependency and keeps the icon set consistent.
 
-### 11.2 Why `@gorhom/bottom-sheet` rather than the platform modal
+### 11.2 Bottom-sheet usage
 
-The brief specifies bottom sheets for the request-type selection and form sheets. The library is
-wrapped once in `src/components/ui/Sheet.tsx` so that the rest of the app never touches it and a
-future swap to a different implementation touches one file.
+The request-type selection and short form interactions use bottom sheets. Child registration is a
+full-screen route so its fields can scroll naturally when the keyboard is open. The library is
+wrapped once in `src/components/ui/Sheet.tsx` so the rest of the app does not depend on its API.
 
 ---
 
@@ -1028,7 +1045,7 @@ imported with a type instead of `require`, and it is ignored by ESLint.
 
 ### 12.1 Configuration files (reference content)
 
-`app.json` adds the `expo-localization` plugin with `supportedLocales` for `ios` and `android` (`en`, `fr`). `src/lib/i18n/` provides typed dictionaries, `translate` with interpolation and plurals, locale detection/defaulting to `fr` with an override stored in `useSessionStore`, and `src/hooks/use-translation.ts`. `src/lib/format/` provides locale-aware formatters using `Intl`. `src/store/session-store.ts` holds the session state (locale override).
+`app.json` adds the `expo-localization` plugin with `supportedLocales` for `ios` and `android` (`en`, `fr`). `src/lib/i18n/` provides typed dictionaries, `translate` with interpolation and plurals, a French default with an explicit locale override stored in `useSessionStore`, and `src/hooks/use-translation.ts`. The device locale does not select the initial language. `src/lib/format/` provides locale-aware formatters using `Intl`. `src/store/session-store.ts` holds the session state (locale override).
 
 `babel.config.js`
 ```js
@@ -1077,7 +1094,9 @@ The V1 prototype at `/home/anaclet/workspace/Dev/m3e-test/assets/` already conta
 `icon.png`, `splash-icon.png`, `android-icon-{foreground,background,monochrome}.png` and
 `favicon.png` for the "Mon Précepteur" brand (splash `#F5DEC9`, adaptive background `#FFF8F4`).
 These are **copied into V2** at the foundation step so the app has a coherent identity from day one.
-They are the only V1 assets reused; no V1 component code is carried over verbatim.
+They are the only V1 assets reused; no V1 component code is carried over verbatim. The Expo
+`expo-splash-screen` plugin uses `assets/mon-precepteur-logo.png` as its image so the native splash
+shows the same brand lock-up as the Welcome screen.
 
 ---
 

@@ -19,7 +19,7 @@ describe('Request type screen', () => {
     expect(screen.getByText('Pour qui tu veux un précepteur ?')).toBeTruthy();
     expect(screen.getByText('Pour mon enfant')).toBeTruthy();
     expect(
-      screen.getByText('Enregistrez vos enfants et décrivez leurs besoins scolaires.'),
+      screen.getByText('Enregistrez votre enfant et décrivez ses besoins scolaires.'),
     ).toBeTruthy();
     expect(screen.getByText('Pour moi-même')).toBeTruthy();
     expect(screen.getByText('Suivez un cours ou une formation pour vous-même.')).toBeTruthy();
