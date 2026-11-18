@@ -14,7 +14,11 @@ export { Input, type InputProps } from './Input';
 export { KeyValue, type KeyValueProps } from './KeyValue';
 export { ListItem, type ListItemProps } from './ListItem';
 export { MultiSelect, type MultiSelectProps } from './MultiSelect';
-export { PinInput, type PinInputProps } from './PinInput';
+export {
+  PinInput,
+  type PinInputProps,
+  type PinInputVariant,
+} from './PinInput';
 export { ProgressBar, type ProgressBarProps } from './ProgressBar';
 export { SegmentedControl, type SegmentedControlOption, type SegmentedControlProps } from './SegmentedControl';
 export { Select, type SelectOption, type SelectProps } from './Select';

@@ -49,27 +49,27 @@ describe('PinScreen', () => {
       ),
     ).toBeTruthy();
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '4826');
-    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '4827');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '482659');
+    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '482658');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
     expect(await screen.findByText('The codes do not match')).toBeTruthy();
     expect(onCreatePin).not.toHaveBeenCalled();
 
-    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '4826');
+    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '482659');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
-    expect(onCreatePin).toHaveBeenCalledWith('4826');
+    expect(onCreatePin).toHaveBeenCalledWith('482659');
   });
 
-  it('rejects a PIN that is not exactly four digits', async () => {
+  it('rejects a PIN that is not exactly six digits', async () => {
     await renderScreen();
 
     await fireEvent.changeText(screen.getByTestId('pin-entry'), '482');
     await fireEvent.changeText(screen.getByTestId('pin-confirm'), '482');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
-    expect(screen.getAllByText('The code must be 4 digits')).toHaveLength(2);
+    expect(screen.getAllByText('The code must be 6 digits')).toHaveLength(2);
     expect(onCreatePin).not.toHaveBeenCalled();
   });
 
@@ -79,10 +79,10 @@ describe('PinScreen', () => {
     expect(screen.getByText('Enter your access code')).toBeTruthy();
     expect(screen.queryByTestId('pin-confirm')).toBeNull();
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '4826');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '482659');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
-    expect(onVerifyPin).toHaveBeenCalledWith('4826');
+    expect(onVerifyPin).toHaveBeenCalledWith('482659');
     expect(onCreatePin).not.toHaveBeenCalled();
   });
 
@@ -90,7 +90,7 @@ describe('PinScreen', () => {
     onVerifyPin.mockResolvedValue(false);
     await renderScreen(true);
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '0000');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '000000');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
     expect(await screen.findByText('That code does not match this profile')).toBeTruthy();
@@ -101,8 +101,8 @@ describe('PinScreen', () => {
     onCreatePin.mockRejectedValue(new Error('Crypto unavailable'));
     await renderScreen();
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '4826');
-    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '4826');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '482659');
+    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '482659');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
     expect(await screen.findByText('The code could not be saved. Try again.')).toBeTruthy();

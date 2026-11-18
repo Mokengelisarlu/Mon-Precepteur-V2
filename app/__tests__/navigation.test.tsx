@@ -43,7 +43,7 @@ describe('Navigation shell', () => {
       contact: null,
       clientId: null,
       children: [],
-      needsByChildId: {},
+      onboardingByChildId: {},
       selfNeeds: [],
       tutorPreference: 'none',
     });
@@ -61,13 +61,16 @@ describe('Navigation shell', () => {
     expect(screen.getByTestId('welcome-get-started')).toBeTruthy();
   });
 
-  it('shows only the two entry actions on the welcome screen', async () => {
+  it('shows the connection form and get started action on the welcome screen', async () => {
     await renderApp('/welcome');
 
+    expect(screen.getByTestId('welcome-phone-input')).toBeTruthy();
+    expect(screen.getByTestId('welcome-pin-input')).toBeTruthy();
+    expect(screen.getByTestId('welcome-login-submit')).toBeTruthy();
     expect(screen.getByTestId('welcome-get-started')).toBeTruthy();
-    expect(screen.getByTestId('welcome-login')).toBeTruthy();
     expect(screen.queryByTestId('admin-simulation-link')).toBeNull();
-    expect(screen.queryByTestId('welcome-language-switch')).toBeNull();
+    // Credit line
+    expect(screen.getByText('Powerd by Mokengeli Sarlu')).toBeTruthy();
   });
 
   it('opens the request-type sheet, routes to children, and keeps the selection on return', async () => {
@@ -128,65 +131,61 @@ describe('Navigation shell', () => {
     expect(screen.queryByTestId('request-type-sheet')).toBeNull();
   });
 
-  it('adds, edits, and removes children through the parent journey', async () => {
+  it('registers one child and continues directly to the parent contact screen', async () => {
     const { result } = await renderApp('/welcome');
 
     await fireEvent.press(screen.getByTestId('welcome-get-started'));
     await fireEvent.press(screen.getByTestId('request-type-child'));
     expect(result.getPathnameWithParams()).toBe('/children');
-    expect(screen.getByTestId('children-empty-state')).toBeTruthy();
+    expect(screen.getByTestId('child-form-screen')).toBeTruthy();
+    expect(screen.getByTestId('child-onboarding-step')).toHaveTextContent('Child profile');
+    expect(screen.getByTestId('child-onboarding-next')).toBeTruthy();
 
-    await fireEvent.press(screen.getByTestId('children-empty-add'));
     await fireEvent.changeText(screen.getByTestId('child-first-name'), 'Amina');
-    await fireEvent.changeText(
-      screen.getByTestId('child-year-of-birth'),
-      String(new Date().getFullYear() - 10),
-    );
-    await fireEvent.press(screen.getByTestId('child-level'));
-    await fireEvent.press(screen.getByText('Primary · P4'));
-    await fireEvent.press(screen.getByTestId('child-save'));
+    const birthYear = String(new Date().getFullYear() - 10);
+    await fireEvent.press(screen.getByTestId('child-year-of-birth'));
+    await fireEvent.press(screen.getByText(birthYear));
+    await fireEvent.press(screen.getByTestId('child-gender'));
+    await fireEvent.press(screen.getByText('Girl'));
+    await fireEvent.press(screen.getByTestId('child-onboarding-next'));
 
-    expect(result.getPathnameWithParams()).toBe('/children');
-    expect(useRequestDraftStore.getState().children).toHaveLength(1);
+    expect(screen.getByTestId('child-onboarding-step')).toHaveTextContent('Child profile');
+    await fireEvent.press(screen.getByTestId('child-grade'));
+    await fireEvent.press(screen.getByText('4th primary'));
+    await fireEvent.press(screen.getByTestId('child-estimated-level'));
+    await fireEvent.press(screen.getByText('Average'));
+    await fireEvent.press(screen.getByTestId('child-onboarding-next'));
+
+    expect(screen.getByTestId('child-onboarding-step')).toHaveTextContent('Child profile');
+    await fireEvent.press(screen.getByTestId('child-subject-mathematics'));
+    await fireEvent.press(screen.getByTestId('child-onboarding-next'));
+
+    expect(screen.getByTestId('child-onboarding-step')).toHaveTextContent('Child profile');
+    await fireEvent.press(screen.getByTestId('child-day-mon'));
+    await fireEvent.press(screen.getByTestId('child-day-tue'));
+    await fireEvent.press(screen.getByTestId('child-day-wed'));
+    await fireEvent.press(screen.getByTestId('child-slot-evening'));
+    await fireEvent.press(screen.getByTestId('child-onboarding-next'));
+
     const firstChild = useRequestDraftStore.getState().children[0];
     expect(firstChild?.firstName).toBe('Amina');
-
-    await fireEvent.press(screen.getByTestId('children-add'));
-    await fireEvent.changeText(screen.getByTestId('child-first-name'), 'David');
-    await fireEvent.changeText(
-      screen.getByTestId('child-year-of-birth'),
-      String(new Date().getFullYear() - 12),
-    );
-    await fireEvent.press(screen.getByTestId('child-level'));
-    await fireEvent.press(screen.getByText('Secondary · 6e'));
-    await fireEvent.press(screen.getByTestId('child-save'));
-
-    expect(useRequestDraftStore.getState().children).toHaveLength(2);
-
-    if (firstChild === undefined) {
-      throw new Error('The first child should have been saved.');
-    }
-    await fireEvent.press(screen.getByTestId(`child-edit-${firstChild.id}`));
-    await fireEvent.changeText(screen.getByTestId('child-first-name'), 'Amina Rose');
-    await fireEvent.press(screen.getByTestId('child-save'));
-
-    expect(useRequestDraftStore.getState().children).toHaveLength(2);
-    expect(
-      useRequestDraftStore.getState().children.find((child) => child.id === firstChild.id)?.firstName,
-    ).toBe('Amina Rose');
-
-    await fireEvent.press(screen.getByTestId(`child-remove-${firstChild.id}`));
-    await fireEvent.press(screen.getByText('Remove'));
-
+    expect(firstChild?.gender).toBe('girl');
+    expect(firstChild?.level).toBe('P4');
     expect(useRequestDraftStore.getState().children).toHaveLength(1);
-
-    const remainingChild = useRequestDraftStore.getState().children[0];
-    if (remainingChild === undefined) {
-      throw new Error('The remaining child should have been saved.');
+    expect(useRequestDraftStore.getState().onboardingByChildId[firstChild?.id ?? '']).toMatchObject({
+      subjects: ['mathematics'],
+      days: ['mon', 'tue', 'wed'],
+      slots: ['evening'],
+    });
+    if (firstChild === undefined) {
+      throw new Error('The child should have been saved before continuing.');
     }
-    await fireEvent.press(screen.getByTestId('children-continue'));
+    expect(result.getPathnameWithParams()).toBe('/contact');
+    expect(screen.getByTestId('contact-screen')).toBeTruthy();
 
-    expect(result.getPathnameWithParams()).toBe(`/needs/child/${remainingChild.id}`);
+    await fireEvent.press(screen.getByTestId('contact-back'));
+    expect(result.getPathnameWithParams()).toBe('/children');
+    expect(screen.getByDisplayValue('Amina')).toBeTruthy();
   });
 
   it('captures an adult need without creating a child and continues to contact details', async () => {
@@ -231,60 +230,11 @@ describe('Navigation shell', () => {
     expect(result.getPathnameWithParams()).toBe('/needs/self');
   });
 
-  it('visits each child needs screen in order before continuing to contact details', async () => {
-    const firstChild = {
-      id: 'chd_child1',
-      firstName: 'Amina',
-      yearOfBirth: new Date().getFullYear() - 10,
-      level: 'P4',
-      createdAt: 100,
-      updatedAt: 100,
-    } as const;
-    const secondChild = {
-      id: 'chd_child2',
-      firstName: 'David',
-      yearOfBirth: new Date().getFullYear() - 12,
-      level: '6e',
-      createdAt: 200,
-      updatedAt: 200,
-    } as const;
-    const firstNeed = {
-      id: 'ned_need1',
-      childId: firstChild.id,
-      learnerIsClient: false,
-      subject: 'Mathematics',
-      level: firstChild.level,
-      objective: 'Build confidence with fractions',
-      frequency: 'weekly_2',
-      sessionMinutes: 45,
-      availability: 'Tuesday after 4 pm',
-      format: 'online',
-      createdAt: 100,
-      updatedAt: 100,
-    } as const;
-    const secondNeed = {
-      ...firstNeed,
-      id: 'ned_need2',
-      childId: secondChild.id,
-      subject: 'French',
-    } as const;
-    useRequestDraftStore.setState({
-      journeyType: 'child',
-      children: [firstChild, secondChild],
-      needsByChildId: {
-        [firstChild.id]: [firstNeed],
-        [secondChild.id]: [secondNeed],
-      },
-    });
+  it('redirects the obsolete child-needs route to parent contact details', async () => {
+    useRequestDraftStore.setState({ journeyType: 'child' });
 
-    const { result } = await renderApp(`/needs/child/${firstChild.id}`);
-    expect(screen.getByText('What does Amina need?')).toBeTruthy();
+    const { result } = await renderApp('/needs/child/chd_child1');
 
-    await fireEvent.press(screen.getByTestId('child-needs-continue'));
-    expect(result.getPathnameWithParams()).toBe(`/needs/child/${secondChild.id}`);
-    expect(screen.getByText('What does David need?')).toBeTruthy();
-
-    await fireEvent.press(screen.getByTestId('child-needs-continue'));
     expect(result.getPathnameWithParams()).toMatch(/^\/contact(?:\?|$)/);
     expect(screen.getByTestId('contact-screen')).toBeTruthy();
   });
@@ -298,6 +248,11 @@ describe('Navigation shell', () => {
     await fireEvent.changeText(screen.getByTestId('contact-last-name'), 'Kabila');
     await fireEvent.changeText(screen.getByTestId('contact-phone'), '0812345678');
     await fireEvent.press(screen.getByTestId('contact-continue'));
+    await fireEvent.changeText(screen.getByTestId('contact-commune'), 'Gombe');
+    await fireEvent.changeText(screen.getByTestId('contact-quartier'), 'Centre');
+    await fireEvent.changeText(screen.getByTestId('contact-avenue'), 'Avenue de la Paix');
+    await fireEvent.changeText(screen.getByTestId('contact-number'), '12');
+    await fireEvent.press(screen.getByTestId('contact-continue'));
 
     expect(screen.getByTestId('contact-duplicate-sheet')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('contact-duplicate-continue'));
@@ -309,17 +264,26 @@ describe('Navigation shell', () => {
         firstName: existingClient.firstName,
         lastName: existingClient.lastName,
         phone: existingClient.phone,
-        email: existingClient.email,
-        address: existingClient.address,
+        city: 'Lubumbashi',
+        commune: 'Gombe',
+        quartier: 'Centre',
+        avenue: 'Avenue de la Paix',
+        number: '12',
+        address: '12, Avenue de la Paix, Centre, Gombe, Lubumbashi',
       },
     });
-    expect(useClientStore.getState().clients).toEqual([existingClient]);
+    expect(useClientStore.getState().clients[0]).toMatchObject({
+      id: existingClient.id,
+      city: 'Lubumbashi',
+      commune: 'Gombe',
+      quartier: 'Centre',
+      avenue: 'Avenue de la Paix',
+      number: '12',
+    });
   });
 
-  it('opens the login-unavailable screen from Welcome and returns home', async () => {
-    const { result } = await renderApp('/welcome');
-
-    await fireEvent.press(screen.getByTestId('welcome-login'));
+  it('displays the login-unavailable notice on direct /login route and returns home', async () => {
+    const { result } = await renderApp('/login');
 
     expect(result.getPathnameWithParams()).toBe('/login');
     expect(screen.getByTestId('login-unavailable-screen')).toBeTruthy();

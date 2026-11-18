@@ -194,23 +194,23 @@ describe('PinInput', () => {
   it('keeps digits only and caps the length', async () => {
     const onChange = jest.fn();
     const { getByTestId } = await render(
-      <PinInput length={4} value="" onChange={onChange} testID="pin" />,
+      <PinInput length={6} value="" onChange={onChange} testID="pin" />,
     );
 
-    await fireEvent.changeText(getByTestId('pin'), '12a3456');
+    await fireEvent.changeText(getByTestId('pin'), '12a3456789');
 
-    expect(onChange).toHaveBeenCalledWith('1234');
+    expect(onChange).toHaveBeenCalledWith('123456');
   });
 
   it('reports completion when every digit is filled', async () => {
     const onComplete = jest.fn();
     const { getByTestId } = await render(
-      <PinInput length={4} value="" onChange={jest.fn()} onComplete={onComplete} testID="pin" />,
+      <PinInput length={6} value="" onChange={jest.fn()} onComplete={onComplete} testID="pin" />,
     );
 
-    await fireEvent.changeText(getByTestId('pin'), '1234');
+    await fireEvent.changeText(getByTestId('pin'), '123456');
 
-    expect(onComplete).toHaveBeenCalledWith('1234');
+    expect(onComplete).toHaveBeenCalledWith('123456');
   });
 });
 

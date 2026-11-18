@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { normalizeDrcPhoneNumber } from './lib/phone';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PIN_PATTERN = /^\d{4}$/;
+const PIN_PATTERN = /^\d{6}$/;
 
 const pinFieldsSchema = z.object({
   pin: z.string().regex(PIN_PATTERN, 'validation.pin.format'),

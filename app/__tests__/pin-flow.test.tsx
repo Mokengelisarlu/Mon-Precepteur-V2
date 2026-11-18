@@ -47,8 +47,8 @@ describe('PIN route', () => {
     const result = renderRouter(undefined, { initialUrl: '/pin' });
     await result;
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '4826');
-    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '4826');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '482659');
+    await fireEvent.changeText(screen.getByTestId('pin-confirm'), '482659');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
     await waitFor(() => expect(result.getPathnameWithParams()).toBe('/review'));
@@ -59,13 +59,13 @@ describe('PIN route', () => {
       ...contact,
       pinSalt: '2a'.repeat(16),
     });
-    expect(client?.pinHash).toBe(await hashPin('4826', '2a'.repeat(16)));
+    expect(client?.pinHash).toBe(await hashPin('482659', '2a'.repeat(16)));
     expect(
       JSON.stringify({
         client: useClientStore.getState(),
         draft: useRequestDraftStore.getState(),
       }),
-    ).not.toContain('4826');
+    ).not.toContain('482659');
   });
 
   it('verifies an existing client PIN without replacing its profile credentials', async () => {
@@ -73,7 +73,7 @@ describe('PIN route', () => {
       id: clientId,
       ...contact,
       pinSalt: existingSalt,
-      pinHash: await hashPin('1357', existingSalt),
+      pinHash: await hashPin('135792', existingSalt),
       createdAt: 100,
       updatedAt: 100,
     };
@@ -82,14 +82,14 @@ describe('PIN route', () => {
     const result = renderRouter(undefined, { initialUrl: '/pin' });
     await result;
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '0000');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '000000');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
     expect(await screen.findByText('That code does not match this profile')).toBeTruthy();
     expect(result.getPathnameWithParams()).toBe('/pin');
     expect(useClientStore.getState().clients[0]).toEqual(existingClient);
 
-    await fireEvent.changeText(screen.getByTestId('pin-entry'), '1357');
+    await fireEvent.changeText(screen.getByTestId('pin-entry'), '135792');
     await fireEvent.press(screen.getByTestId('pin-continue'));
 
     await waitFor(() => expect(result.getPathnameWithParams()).toBe('/review'));

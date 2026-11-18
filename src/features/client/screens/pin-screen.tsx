@@ -138,6 +138,7 @@ export function PinScreen({
               inputRef={field.ref}
               errorText={errorText(fieldState.error?.message)}
               secure
+              length={6}
               accessibilityLabel={t('pin.accessCode')}
               testID="pin-entry"
             />
@@ -161,6 +162,7 @@ export function PinScreen({
                 inputRef={field.ref}
                 errorText={errorText(fieldState.error?.message)}
                 secure
+                length={6}
                 accessibilityLabel={t('pin.confirmCode')}
                 testID="pin-confirm"
               />

@@ -134,7 +134,7 @@ export const en = {
   'validation.contact.firstName': 'First name is required',
   'validation.contact.lastName': 'Last name is required',
   'validation.contact.phone': 'Enter a valid phone number',
-  'validation.pin.format': 'The code must be 4 digits',
+  'validation.pin.format': 'The code must be 6 digits',
   'validation.pin.mismatch': 'The codes do not match',
   'validation.pin.incorrect': 'That code does not match this profile',
   'validation.payment.amountMismatch':
@@ -167,7 +167,7 @@ export const en = {
   'welcome.login': 'Login',
   'welcome.phoneLabel': 'Phone number',
   'welcome.phonePlaceholder': '0812345678 or +243...',
-  'welcome.pinLabel': '4-digit PIN',
+  'welcome.pinLabel': '6-digit PIN',
   'welcome.submitLogin': 'Log in',
   'welcome.loginFailed': 'Incorrect phone number or PIN.',
   'welcome.needHelp': 'Need help?',
@@ -279,7 +279,7 @@ export const en = {
   'onboarding.selectPlaceholder': 'Select',
 
   'pin.createTitle': 'Create your access code',
-  'pin.createHint': 'Choose a 4-digit code you will remember.',
+  'pin.createHint': 'Choose a 6-digit code you will remember.',
   'pin.verifyTitle': 'Enter your access code',
   'pin.verifyHint': 'Enter the access code for your existing profile.',
   'pin.accessCode': 'Access code',

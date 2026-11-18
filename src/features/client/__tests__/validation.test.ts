@@ -28,24 +28,24 @@ describe('contactFormSchema', () => {
   });
 
   describe('pinFormSchema', () => {
-    const validPin = { pin: '4826', pinConfirm: '4826' };
+    const validPin = { pin: '482659', pinConfirm: '482659' };
 
-    it('accepts matching four-digit PINs', () => {
+    it('accepts matching six-digit PINs', () => {
       expect(pinFormSchema.safeParse(validPin).success).toBe(true);
     });
 
     it.each([
       { pin: '123', pinConfirm: '123' },
-      { pin: '12a4', pinConfirm: '12a4' },
-      { pin: '4826', pinConfirm: '482' },
-      { pin: '4826', pinConfirm: '4827' },
+      { pin: '12a456', pinConfirm: '12a456' },
+      { pin: '482659', pinConfirm: '482' },
+      { pin: '482659', pinConfirm: '482658' },
     ])('rejects an invalid PIN entry or confirmation', (values) => {
       expect(pinFormSchema.safeParse(values).success).toBe(false);
     });
 
-    it('validates the four-digit PIN when confirming an existing profile', () => {
-      expect(pinVerificationSchema.safeParse({ pin: '4826', pinConfirm: '' }).success).toBe(true);
-      expect(pinVerificationSchema.safeParse({ pin: '482', pinConfirm: '' }).success).toBe(false);
+    it('validates the six-digit PIN when confirming an existing profile', () => {
+      expect(pinVerificationSchema.safeParse({ pin: '482659', pinConfirm: '' }).success).toBe(true);
+      expect(pinVerificationSchema.safeParse({ pin: '48265', pinConfirm: '' }).success).toBe(false);
     });
   });
 
